@@ -374,9 +374,14 @@ function condividi(titolo, testo) {
   }
 }
 
-// Link al video; con un segmento parte dall'inizio segnato (YouTube non permette di indicare la fine)
+// Link al video. Con un segmento usa il link del player incorporato di YouTube, l'unico che
+// rispetta sia l'inizio sia la fine (si apre nel browser di chi lo riceve, non nell'app YouTube).
 function linkVideo(id, seg) {
-  return 'https://www.youtube.com/watch?v=' + id + (seg?.inizio > 0 ? '&t=' + seg.inizio + 's' : '');
+  if (!seg) return 'https://www.youtube.com/watch?v=' + id;
+  const p = new URLSearchParams({ autoplay: '1' });
+  if (seg.inizio > 0) p.set('start', seg.inizio);
+  if (seg.fine > 0) p.set('end', seg.fine);
+  return 'https://www.youtube.com/embed/' + id + '?' + p;
 }
 
 // Testo per un video: titolo, eventuale segmento e link
