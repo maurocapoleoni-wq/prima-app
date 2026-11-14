@@ -1,7 +1,7 @@
 // ---------- Novità dai canali a cui sei iscritto ----------
 // ID client OAuth di Google (Google Cloud → Credenziali → ID client OAuth 2.0, tipo "Applicazione web").
 // Non è segreto: può stare nel codice pubblico.
-const GOOGLE_CLIENT_ID = '';
+const GOOGLE_CLIENT_ID = '65288816095-2tr0llic4k7p6c7if7mq3mlhchff98bd.apps.googleusercontent.com';
 
 const SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';
 const REDIRECT = new URL('./', location.href).href; // es. https://maurocapoleoni-wq.github.io/prima-app/
