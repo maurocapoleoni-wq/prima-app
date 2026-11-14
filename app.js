@@ -364,6 +364,34 @@ async function formatoVideo(id) {
   } catch { /* resta 16:9 */ }
 }
 
+// ---------- Condividi (WhatsApp e altre app) ----------
+// Apre il menu "Condividi" di Android; se non c'è, apre WhatsApp con il messaggio già scritto.
+function condividi(titolo, testo) {
+  if (navigator.share) {
+    navigator.share({ title: titolo, text: testo }).catch(() => { /* annullato dall'utente */ });
+  } else {
+    window.open('https://wa.me/?text=' + encodeURIComponent(testo), '_blank', 'noopener');
+  }
+}
+
+// Link al video; con un segmento parte dall'inizio segnato (YouTube non permette di indicare la fine)
+function linkVideo(id, seg) {
+  return 'https://www.youtube.com/watch?v=' + id + (seg?.inizio > 0 ? '&t=' + seg.inizio + 's' : '');
+}
+
+// Testo per un video: titolo, eventuale segmento e link
+function testoVideo(v, seg) {
+  const parte = seg ? ` (dal minuto ${formatTempo(seg.inizio || 0)}${seg.fine != null ? ' al ' + formatTempo(seg.fine) : ''})` : '';
+  return `${v.title}${parte}\n${linkVideo(v.id, seg)}`;
+}
+
+$('btn-condividi').addEventListener('click', () => {
+  if (!videoCorrente) return;
+  const seg = videoCorrente.usaSegmento ? leggiSegmenti()[videoCorrente.id] : null;
+  comandoPlayer('pauseVideo');
+  condividi(videoCorrente.title, testoVideo(videoCorrente, seg));
+});
+
 // ---------- Guarda sulla TV ----------
 // Apre il video nell'app YouTube, dove c'è il tasto ufficiale per trasmettere alla TV.
 // Su Android un link "intent" apre sempre l'app (e il sito solo se l'app non c'è).

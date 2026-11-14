@@ -10,7 +10,8 @@ const scriviSalvati = (s) => scrivi(K.salvati, s);
 let listaSalvatiAttiva = null;
 let paginaSalvati = 0;
 
-// Liste di "Mi piace": quelle del Feed, poi quelle eliminate dal Feed che hanno ancora video salvati
+// Liste di "Mi piace": quelle del Feed, poi quelle "solo in Mi piace" (eliminate dal Feed,
+// o create con "+ Nuova lista" salvando un video) finché contengono almeno un video
 function listeSalvati() {
   const feed = leggiListe().map((l) => ({ id: l.id, nome: l.nome, nelFeed: true }));
   const s = leggiSalvati();
@@ -64,7 +65,7 @@ function mostraSalvati() {
   aggiornaPager($('pager-salvati'), `${paginaSalvati + 1} di ${totale}`, paginaSalvati > 0, paginaSalvati + 1 < totale, totale > 0);
 
   const lista = liste.find((l) => l.id === listaSalvatiAttiva);
-  const dove = lista.nelFeed ? '' : ' (non più nel Feed)';
+  const dove = lista.nelFeed ? '' : ' (solo in Mi piace)';
   statusSalvati(video.length
     ? `${lista.nome}${dove}: ${video.length} ${video.length === 1 ? 'video salvato' : 'video salvati'}`
     : `Nessun video in "${lista.nome}". Apri un video e tocca ♡ per salvarlo qui.`);
@@ -73,7 +74,19 @@ function mostraSalvati() {
   const btn = $('btn-salvati-elimina');
   btn.textContent = lista.nelFeed ? 'Svuota lista' : 'Elimina lista';
   btn.disabled = video.length === 0;
+  $('btn-salvati-condividi').disabled = video.length === 0;
 }
+
+// Condivide tutta la lista in un messaggio: titoli e link numerati (con i segmenti segnati)
+$('btn-salvati-condividi').addEventListener('click', () => {
+  const lista = listeSalvati().find((l) => l.id === listaSalvatiAttiva);
+  const video = leggiSalvati()[lista?.id] || [];
+  if (!video.length) return;
+  const segmenti = leggiSegmenti();
+  const righe = video.map((v, i) => `${i + 1}. ${testoVideo(v, segmenti[v.id])}`);
+  const conteggio = video.length === 1 ? '1 video' : `${video.length} video`;
+  condividi(lista.nome, `🎬 La mia lista "${lista.nome}" (${conteggio}):\n\n${righe.join('\n\n')}`);
+});
 
 $('btn-salvati-elimina').addEventListener('click', () => {
   const lista = listeSalvati().find((l) => l.id === listaSalvatiAttiva);
@@ -133,7 +146,30 @@ function mostraSceltaSalva() {
     b.addEventListener('click', () => cambiaSalvato(l.id));
     box.append(b);
   }
+  const nuova = document.createElement('button');
+  nuova.type = 'button';
+  nuova.className = 'chip nuova';
+  nuova.textContent = '+ Nuova lista';
+  nuova.addEventListener('click', salvaInNuovaLista);
+  box.append(nuova);
   $('salva-scelta').classList.remove('hidden');
+}
+
+// Crea una lista solo in "Mi piace" (non nel Feed) e ci salva il video in riproduzione.
+// Se esiste già una lista con quel nome, usa quella.
+function salvaInNuovaLista() {
+  const nome = (prompt('Nome della nuova lista:') || '').trim().slice(0, 30);
+  if (!nome) return;
+  const esistente = listeSalvati().find((l) => norm(l.nome) === norm(nome));
+  if (esistente) {
+    if (!listeConVideo(videoCorrente.id).has(esistente.id)) cambiaSalvato(esistente.id);
+    return;
+  }
+  const id = crypto.randomUUID();
+  const nomi = leggi(K.salvatiNomi, {});
+  nomi[id] = nome;
+  scrivi(K.salvatiNomi, nomi);
+  cambiaSalvato(id); // la lista esiste da quando contiene il video
 }
 
 // Tocca una lista: se il video c'è lo toglie, altrimenti lo aggiunge in cima

@@ -153,6 +153,8 @@ body {
 }
 .tv-area .hint { margin: 0; text-align: center; }
 
+.condividi { margin-top: 12px; }
+
 /* Segmento: segna inizio / segna fine */
 .segmento { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 16px; width: 100%; }
 .segmento-pulsanti { display: flex; gap: 8px; }

@@ -17,7 +17,7 @@ const K = {
   feedListe: 'feed_liste', feedAttiva: 'feed_lista_attiva', // feedListe: [{id, nome, canali: [{id, nome}]}]
   feedCanali: 'feed_canali', // vecchia lista unica: letta solo per creare la "Lista 1"
   salvati: 'salvati_video', // "Mi piace": { idListaFeed: [video] } (vedi salvati.js)
-  salvatiNomi: 'salvati_nomi', // nomi delle liste eliminate dal Feed che restano in "Mi piace": { id: nome }
+  salvatiNomi: 'salvati_nomi', // nomi delle liste "solo in Mi piace" (eliminate dal Feed o create lì): { id: nome }
 };
 
 function leggi(k, def) {
