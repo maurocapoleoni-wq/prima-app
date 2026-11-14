@@ -8,18 +8,22 @@ const statusSalvati = (t) => { $('status-salvati').textContent = t; };
 const leggiSalvati = () => leggi(K.salvati, {});
 const scriviSalvati = (s) => scrivi(K.salvati, s);
 let listaSalvatiAttiva = null;
+// Lista fissa "Guarda più tardi": c'è sempre, si riempie con il pulsante 🕒 nel player
+const ID_DOPO = 'guarda-dopo';
+const NOME_DOPO = '🕒 Guarda più tardi';
 let paginaSalvati = 0;
 
 // Liste di "Mi piace": quelle del Feed, poi quelle "solo in Mi piace" (eliminate dal Feed,
-// o create con "+ Nuova lista" salvando un video) finché contengono almeno un video
+// o create con "+ Nuova lista" salvando un video) finché contengono almeno un video.
+// In testa, sempre presente, "Guarda più tardi".
 function listeSalvati() {
   const feed = leggiListe().map((l) => ({ id: l.id, nome: l.nome, nelFeed: true }));
   const s = leggiSalvati();
   const nomi = leggi(K.salvatiNomi, {});
   const soloQui = Object.keys(s)
-    .filter((id) => s[id].length && !feed.some((l) => l.id === id))
+    .filter((id) => id !== ID_DOPO && s[id].length && !feed.some((l) => l.id === id))
     .map((id) => ({ id, nome: nomi[id] || 'Lista eliminata', nelFeed: false }));
-  return [...feed, ...soloQui];
+  return [{ id: ID_DOPO, nome: NOME_DOPO, fissa: true }, ...feed, ...soloQui];
 }
 
 const contaVideo = (n) => (n === 1 ? 'il suo video salvato' : `i suoi ${n} video salvati`);
@@ -65,14 +69,16 @@ function mostraSalvati() {
   aggiornaPager($('pager-salvati'), `${paginaSalvati + 1} di ${totale}`, paginaSalvati > 0, paginaSalvati + 1 < totale, totale > 0);
 
   const lista = liste.find((l) => l.id === listaSalvatiAttiva);
-  const dove = lista.nelFeed ? '' : ' (solo in Mi piace)';
+  const dove = lista.nelFeed || lista.fissa ? '' : ' (solo in Mi piace)';
+  const tasto = lista.fissa ? '🕒' : '♡';
   statusSalvati(video.length
     ? `${lista.nome}${dove}: ${video.length} ${video.length === 1 ? 'video salvato' : 'video salvati'}`
-    : `Nessun video in "${lista.nome}". Apri un video e tocca ♡ per salvarlo qui.`);
+    : `Nessun video in "${lista.nome}". Apri un video e tocca ${tasto} per salvarlo qui.`);
 
-  // Una lista del Feed qui si può solo svuotare; una lista non più nel Feed si elimina del tutto
+  // Una lista del Feed (o "Guarda più tardi") qui si può solo svuotare;
+  // una lista non più nel Feed si elimina del tutto
   const btn = $('btn-salvati-elimina');
-  btn.textContent = lista.nelFeed ? 'Svuota lista' : 'Elimina lista';
+  btn.textContent = lista.nelFeed || lista.fissa ? 'Svuota lista' : 'Elimina lista';
   btn.disabled = video.length === 0;
   $('btn-salvati-condividi').disabled = video.length === 0;
 }
@@ -92,8 +98,9 @@ $('btn-salvati-elimina').addEventListener('click', () => {
   const lista = listeSalvati().find((l) => l.id === listaSalvatiAttiva);
   const n = (leggiSalvati()[lista?.id] || []).length;
   if (!lista || !n) return;
-  const domanda = lista.nelFeed
-    ? `Svuotare "${lista.nome}"? ${n === 1 ? 'Verrà tolto' : 'Verranno tolti'} ${contaVideo(n)}. La lista resta nel Feed.`
+  const resta = lista.nelFeed || lista.fissa;
+  const domanda = resta
+    ? `Svuotare "${lista.nome}"? ${n === 1 ? 'Verrà tolto' : 'Verranno tolti'} ${contaVideo(n)}.${lista.nelFeed ? ' La lista resta nel Feed.' : ''}`
     : `Eliminare la lista "${lista.nome}" e ${contaVideo(n)}? Non si può annullare.`;
   if (!confirm(domanda)) return;
   const s = leggiSalvati();
@@ -102,10 +109,10 @@ $('btn-salvati-elimina').addEventListener('click', () => {
   const nomi = leggi(K.salvatiNomi, {});
   delete nomi[lista.id];
   scrivi(K.salvatiNomi, nomi);
-  if (!lista.nelFeed) listaSalvatiAttiva = null;
+  if (!resta) listaSalvatiAttiva = null;
   paginaSalvati = 0;
   mostraSalvati();
-  statusSalvati(lista.nelFeed ? `"${lista.nome}" svuotata.` : `Lista "${lista.nome}" eliminata.`);
+  statusSalvati(resta ? `"${lista.nome}" svuotata.` : `Lista "${lista.nome}" eliminata.`);
 });
 
 function rimuoviSalvato(idLista, idVideo) {
@@ -125,11 +132,18 @@ function listeConVideo(idVideo) {
 }
 
 function aggiornaCuore() {
-  const salvato = !!videoCorrente && listeConVideo(videoCorrente.id).size > 0;
+  // il cuore riguarda le liste di Mi piace; "Guarda più tardi" ha il suo pulsante 🕒
+  const dentro = videoCorrente ? listeConVideo(videoCorrente.id) : new Set();
+  const dopo = dentro.delete(ID_DOPO);
+  const salvato = dentro.size > 0;
   const btn = $('btn-salva');
   btn.textContent = salvato ? '♥' : '♡';
   btn.classList.toggle('salvato', salvato);
   btn.setAttribute('aria-label', salvato ? 'Salvato in Mi piace: modifica' : 'Metti Mi piace');
+  const orologio = $('btn-dopo');
+  orologio.classList.toggle('salvato', dopo);
+  orologio.setAttribute('aria-pressed', String(dopo));
+  orologio.setAttribute('aria-label', dopo ? 'In Guarda più tardi: tocca per toglierlo' : 'Aggiungi a Guarda più tardi');
 }
 
 function mostraSceltaSalva() {
@@ -137,7 +151,7 @@ function mostraSceltaSalva() {
   const dentro = listeConVideo(videoCorrente.id);
   const box = $('salva-liste');
   box.innerHTML = '';
-  for (const l of listeSalvati()) {
+  for (const l of listeSalvati().filter((x) => !x.fissa)) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'chip' + (dentro.has(l.id) ? ' attiva' : '');
@@ -160,7 +174,7 @@ function mostraSceltaSalva() {
 function salvaInNuovaLista() {
   const nome = (prompt('Nome della nuova lista:') || '').trim().slice(0, 30);
   if (!nome) return;
-  const esistente = listeSalvati().find((l) => norm(l.nome) === norm(nome));
+  const esistente = listeSalvati().find((l) => !l.fissa && norm(l.nome) === norm(nome));
   if (esistente) {
     if (!listeConVideo(videoCorrente.id).has(esistente.id)) cambiaSalvato(esistente.id);
     return;
@@ -186,9 +200,15 @@ function cambiaSalvato(idLista) {
       salvato: new Date().toISOString(),
     }, ...lista];
   scriviSalvati(s);
-  mostraSceltaSalva();
+  if (!$('salva-scelta').classList.contains('hidden')) mostraSceltaSalva();
   aggiornaCuore();
 }
+
+// 🕒 nel player: aggiunge (o toglie) il video dalla lista "Guarda più tardi" di Mi piace
+$('btn-dopo').addEventListener('click', () => {
+  if (!videoCorrente) return;
+  cambiaSalvato(ID_DOPO);
+});
 
 $('btn-salva').addEventListener('click', () => {
   if ($('salva-scelta').classList.contains('hidden')) mostraSceltaSalva();
