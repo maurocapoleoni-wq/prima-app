@@ -107,6 +107,26 @@ body {
   overflow: hidden;
 }
 .results .channel { font-size: 0.8rem; color: var(--muted); margin: 0; }
+.results .meta { flex: 1; }
+.results .rimuovi {
+  flex-shrink: 0;
+  align-self: center;
+  width: 40px;
+  height: 40px;
+  margin-right: 4px;
+  border: none;
+  border-radius: 50%;
+  background: #333;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+/* Cuore "Mi piace" nel player */
+.cuore { font-size: 1.7rem; color: var(--text); }
+.cuore.salvato { color: var(--red); }
+.salva-scelta { margin: 12px 16px; }
+.salva-titolo { color: var(--muted); font-size: 0.9rem; }
+.salva-scelta .small-btn { align-self: flex-end; }
 
 .player-title {
   font-size: 1rem !important;
@@ -120,7 +140,7 @@ body {
 
 /* Telefono girato in orizzontale: il video occupa tutto lo schermo */
 @media (orientation: landscape) and (max-height: 600px) {
-  #player .top, #player .open-yt { display: none; }
+  #player .top, #player .open-yt, #player .salva-scelta { display: none; }
   #player .frame-wrap {
     position: fixed;
     inset: 0;
@@ -136,12 +156,13 @@ body {
 .tabs { display: flex; gap: 8px; padding: 0 16px; }
 .tabs button {
   flex: 1;
-  padding: 10px;
+  padding: 10px 4px;
   border: none;
   border-radius: 20px;
   background: var(--card);
   color: var(--muted);
-  font-size: 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 .tabs button[aria-selected="true"] { background: var(--text); color: var(--bg); font-weight: 600; }
 

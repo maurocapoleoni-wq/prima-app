@@ -22,6 +22,7 @@
       <button id="btn-tab-cerca" role="tab" aria-selected="true">Cerca</button>
       <button id="btn-tab-novita" role="tab" aria-selected="false">Novità</button>
       <button id="btn-tab-feed" role="tab" aria-selected="false">Feed</button>
+      <button id="btn-tab-salvati" role="tab" aria-selected="false">Mi piace</button>
     </nav>
 
     <!-- Scheda Cerca -->
@@ -135,6 +136,21 @@
         <button class="next">Altri 4 ▶</button>
       </div>
     </div>
+
+    <!-- Scheda Mi piace: video salvati con il cuore, nelle stesse liste del Feed -->
+    <div id="tab-salvati" class="hidden">
+      <section class="novita-area">
+        <div id="salvati-liste" class="chips" aria-label="Liste dei video salvati"></div>
+        <p id="status-salvati" class="status"></p>
+      </section>
+
+      <ul id="results-salvati" class="results"></ul>
+      <div id="pager-salvati" class="pager hidden">
+        <button class="prev">◀ Precedenti</button>
+        <span class="num"></span>
+        <button class="next">Altri 4 ▶</button>
+      </div>
+    </div>
   </main>
 
   <!-- Schermata player -->
@@ -142,11 +158,18 @@
     <header class="top">
       <button id="btn-back" class="icon-btn" aria-label="Indietro">←</button>
       <h2 id="player-title" class="player-title"></h2>
+      <button id="btn-salva" class="icon-btn cuore" aria-label="Metti Mi piace">♡</button>
     </header>
     <div id="frame-wrap" class="frame-wrap">
       <iframe id="yt-frame" title="Video YouTube"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen></iframe>
+    </div>
+    <!-- Scelta delle liste in cui salvare il video (si apre con il cuore) -->
+    <div id="salva-scelta" class="scelta salva-scelta hidden">
+      <span class="salva-titolo">Salva in Mi piace, nella lista:</span>
+      <div id="salva-liste" class="chips"></div>
+      <button type="button" id="btn-salva-chiudi" class="small-btn">Fatto</button>
     </div>
     <a id="open-yt" class="open-yt" target="_blank" rel="noopener">Apri nell'app YouTube</a>
   </section>
@@ -168,5 +191,6 @@
 
   <script src="app.js"></script>
   <script src="novita.js"></script>
+  <script src="salvati.js"></script>
 </body>
 </html>

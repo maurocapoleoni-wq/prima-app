@@ -115,7 +115,8 @@ function formatData(iso) {
 }
 
 // items: [{ id, title, channel, thumb, date?, isNew? }]
-function mostraVideo(ul, items) {
+// opzioni.onRimuovi(video): se presente, ogni video ha una ✕ per toglierlo dall'elenco
+function mostraVideo(ul, items, opzioni = {}) {
   ul.innerHTML = '';
   for (const v of items) {
     const li = document.createElement('li');
@@ -138,7 +139,19 @@ function mostraVideo(ul, items) {
     c.textContent = v.channel + (v.date ? ' · ' + formatData(v.date) : '');
     meta.append(t, c);
     li.append(img, meta);
-    li.addEventListener('click', () => apriVideo(v.id, v.title));
+    if (opzioni.onRimuovi) {
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'rimuovi';
+      x.textContent = '✕';
+      x.setAttribute('aria-label', 'Rimuovi ' + v.title);
+      x.addEventListener('click', (e) => {
+        e.stopPropagation(); // non aprire il video
+        opzioni.onRimuovi(v);
+      });
+      li.append(x);
+    }
+    li.addEventListener('click', () => apriVideo(v.id, v.title, v));
     ul.append(li);
   }
 }
@@ -222,7 +235,12 @@ $('pager-cerca').querySelector('.prev').addEventListener('click', () => {
 });
 
 // ---------- Player ----------
-function apriVideo(id, titolo) {
+// Video in riproduzione: { id, title, channel?, thumb?, date? } (usato da "Mi piace")
+let videoCorrente = null;
+
+function apriVideo(id, titolo, video) {
+  videoCorrente = video || { id, title: titolo };
+  document.dispatchEvent(new CustomEvent('videoaperto'));
   $('player-title').textContent = titolo;
   $('yt-frame').src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0';
   $('open-yt').href = 'https://www.youtube.com/watch?v=' + id;
@@ -256,6 +274,7 @@ async function formatoVideo(id) {
 function chiudiVideo() {
   $('yt-frame').src = 'about:blank';
   show('home');
+  document.dispatchEvent(new CustomEvent('videochiuso'));
 }
 
 $('btn-back').addEventListener('click', () => history.back());

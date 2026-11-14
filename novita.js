@@ -16,6 +16,7 @@ const K = {
   feedGiorni: 'feed_giorni', feedVisti: 'feed_visti',
   feedListe: 'feed_liste', feedAttiva: 'feed_lista_attiva', // feedListe: [{id, nome, canali: [{id, nome}]}]
   feedCanali: 'feed_canali', // vecchia lista unica: letta solo per creare la "Lista 1"
+  salvati: 'salvati_video', // "Mi piace": { idListaFeed: [video] } (vedi salvati.js)
 };
 
 function leggi(k, def) {
@@ -30,13 +31,15 @@ const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
 const parolaIntera = (k) => new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
 
 // ---------- Schede Cerca / Novità / Feed ----------
-const SCHEDE = ['cerca', 'novita', 'feed'];
+const SCHEDE = ['cerca', 'novita', 'feed', 'salvati'];
 function mostraTab(nome) {
   for (const t of SCHEDE) {
     $('tab-' + t).classList.toggle('hidden', t !== nome);
     $('btn-tab-' + t).setAttribute('aria-selected', String(t === nome));
   }
   scrivi(K.tab, nome);
+  // mostraSalvati è in salvati.js, caricato dopo: all'avvio ci pensa salvati.js stesso
+  if (nome === 'salvati' && typeof mostraSalvati === 'function') mostraSalvati();
 }
 for (const t of SCHEDE) $('btn-tab-' + t).addEventListener('click', () => mostraTab(t));
 
@@ -367,7 +370,14 @@ $('btn-feed-elimina').addEventListener('click', () => {
   const liste = leggiListe();
   if (liste.length === 1) return;
   const attiva = listaAttiva();
-  if (!confirm(`Eliminare la lista "${attiva.nome}"? Le tue iscrizioni su YouTube non cambiano.`)) return;
+  const salvati = leggi(K.salvati, {});
+  const nSalvati = (salvati[attiva.id] || []).length;
+  const avviso = nSalvati === 0 ? ''
+    : nSalvati === 1 ? ' Verrà eliminato anche il suo video salvato in "Mi piace".'
+    : ` Verranno eliminati anche i suoi ${nSalvati} video salvati in "Mi piace".`;
+  if (!confirm(`Eliminare la lista "${attiva.nome}"?${avviso} Le tue iscrizioni su YouTube non cambiano.`)) return;
+  delete salvati[attiva.id];
+  scrivi(K.salvati, salvati);
   scrivi(K.feedListe, liste.filter((l) => l.id !== attiva.id));
   delete risultatiFeed[attiva.id];
   selezionaLista(leggiListe()[0].id);
