@@ -218,6 +218,22 @@
       <button type="button" id="btn-salva-chiudi" class="small-btn">Fatto</button>
     </div>
     <div class="tv-area">
+      <!-- Chiedi a Claude: si parla con Claude dentro l'app (cerchio che pulsa, risposta letta ad alta voce) -->
+      <button id="btn-claude" type="button" class="tv-btn tv-claude">✳ Chiedi a Claude</button>
+      <div id="claude-box" class="claude-box hidden" aria-live="polite">
+        <button id="claude-cerchio" type="button" class="claude-cerchio" aria-label="Parla con Claude"><span>✳</span></button>
+        <p id="claude-stato" class="claude-stato"></p>
+        <p id="claude-domanda" class="claude-domanda"></p>
+        <p id="claude-risposta" class="claude-risposta"></p>
+        <form id="claude-form" class="claude-form">
+          <input id="claude-testo" type="text" autocomplete="off" placeholder="…oppure scrivi qui la domanda">
+          <button type="submit" class="small-btn">Invia</button>
+        </form>
+        <div class="claude-azioni">
+          <button id="claude-impostazioni" type="button" class="small-btn hidden">⚙️ Inserisci la chiave</button>
+          <button id="claude-chiudi" type="button" class="small-btn">Chiudi</button>
+        </div>
+      </div>
       <a id="open-yt" class="tv-btn solo-yt" target="_blank" rel="noopener">📺 Guarda sulla TV</a>
       <p class="hint solo-yt">Si apre YouTube: tocca l'icona di trasmissione in alto.</p>
       <!-- Podcast: cerca lo stesso episodio nell'app Spotify (da lì anche Spotify Connect verso TV e casse) -->
@@ -247,6 +263,10 @@
       <input id="api-key" type="text" autocomplete="off" spellcheck="false" placeholder="AIza...">
       <button id="btn-save-key">Salva</button>
       <p class="hint">Facoltativa: se lasci vuoto, l'app usa la chiave già inclusa. Una chiave inserita qui resta salvata solo su questo telefono.</p>
+      <label for="claude-key" class="claude-label">Chiave di Claude (Anthropic)</label>
+      <input id="claude-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-...">
+      <button id="btn-save-claude">Salva</button>
+      <p id="claude-key-info" class="hint">Serve per "Chiedi a Claude". Resta salvata solo su questo telefono (in questo browser) e non finisce mai su GitHub.</p>
       <button id="btn-esci" class="link-btn hidden">Esci dall'account Google</button>    </div>
   </section>
 
@@ -254,5 +274,6 @@
   <script src="novita.js"></script>
   <script src="salvati.js"></script>
   <script src="podcast.js"></script>
+  <script src="claude.js"></script>
 </body>
 </html>

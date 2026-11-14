@@ -17,6 +17,7 @@ const daEpisodioApple = (r) => ({
   date: r.releaseDate,
   durata: r.trackTimeMillis ? Math.round(r.trackTimeMillis / 1000) : undefined,
   fonte: 'podcast',
+  descrizione: (r.description || r.shortDescription || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 3000),
 });
 
 // Chiamata da caricaPaginaRicerca in app.js
