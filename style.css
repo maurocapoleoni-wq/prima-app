@@ -153,6 +153,18 @@ body {
 }
 .tv-area .hint { margin: 0; text-align: center; }
 
+/* Lingua dell'audio */
+.lingue { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--muted); }
+.lingue button {
+  padding: 8px 16px;
+  border-radius: 18px;
+  border: 1px solid #444;
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+.lingue button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+
 /* Telefono girato in orizzontale: il video occupa tutto lo schermo */
 @media (orientation: landscape) and (max-height: 600px) {
   #player .top, #player .tv-area, #player .salva-scelta { display: none; }
