@@ -325,12 +325,13 @@ $('btn-seg-azzera').addEventListener('click', () => {
   aggiornaSegmento();
 });
 
-// video.usaSegmento = true quando il video è aperto dalla scheda "Mi piace"
+// video.usaSegmento = true quando il video è aperto dalla scheda "Mi piace";
+// video.segmento = { inizio, fine } quando arriva da un link condiviso
 function apriVideo(id, titolo, video) {
   videoCorrente = video || { id, title: titolo };
   document.dispatchEvent(new CustomEvent('videoaperto'));
   $('player-title').textContent = titolo;
-  const seg = video?.usaSegmento ? leggiSegmenti()[id] : null;
+  const seg = video?.segmento || (video?.usaSegmento ? leggiSegmenti()[id] : null);
   tempoVideo = seg?.inizio || 0;
   $('yt-frame').src = urlPlayer(id, seg);
   aggiornaSegmento(seg ? 'Riproduco il segmento: ' + testoSegmento(seg) : '');
@@ -374,25 +375,40 @@ function condividi(titolo, testo) {
   }
 }
 
-// Link al video. Con un segmento usa il link del player incorporato di YouTube, l'unico che
-// rispetta sia l'inizio sia la fine (si apre nel browser di chi lo riceve, non nell'app YouTube).
-function linkVideo(id, seg) {
-  if (!seg) return 'https://www.youtube.com/watch?v=' + id;
-  const p = new URLSearchParams({ autoplay: '1' });
+// Link al video. Senza segmento: link normale di YouTube.
+// Con un segmento: link a QUESTA app con video e segmento nell'indirizzo. Android passa all'app
+// YouTube tutti i link youtube.com (che ignorerebbe la fine), ma non questo: si apre la nostra app,
+// che fa partire e fermare il video nei punti giusti (vedi apriVideoDaLink).
+function linkVideo(v, seg) {
+  if (!seg) return 'https://www.youtube.com/watch?v=' + v.id;
+  const p = new URLSearchParams({ v: v.id });
   if (seg.inizio > 0) p.set('start', seg.inizio);
   if (seg.fine > 0) p.set('end', seg.fine);
-  return 'https://www.youtube.com/embed/' + id + '?' + p;
+  p.set('titolo', (v.title || '').slice(0, 100));
+  return new URL('./', location.href).href + '?' + p;
 }
 
 // Testo per un video: titolo, eventuale segmento e link
 function testoVideo(v, seg) {
   const parte = seg ? ` (dal minuto ${formatTempo(seg.inizio || 0)}${seg.fine != null ? ' al ' + formatTempo(seg.fine) : ''})` : '';
-  return `${v.title}${parte}\n${linkVideo(v.id, seg)}`;
+  return `${v.title}${parte}\n${linkVideo(v, seg)}`;
+}
+
+// Apertura da un link condiviso (…/prima-app/?v=ID&start=80&end=226&titolo=…)
+function apriVideoDaLink() {
+  const p = new URLSearchParams(location.search);
+  const id = p.get('v');
+  if (!id || !/^[\w-]{6,20}$/.test(id)) return;
+  const intero = (k) => (/^\d+$/.test(p.get(k) || '') ? Number(p.get(k)) : undefined);
+  const segmento = { inizio: intero('start'), fine: intero('end') };
+  const titolo = p.get('titolo') || 'Video condiviso';
+  history.replaceState(null, '', location.pathname); // il tasto indietro torna all'app, senza riaprire il video
+  apriVideo(id, titolo, { id, title: titolo, segmento });
 }
 
 $('btn-condividi').addEventListener('click', () => {
   if (!videoCorrente) return;
-  const seg = videoCorrente.usaSegmento ? leggiSegmenti()[videoCorrente.id] : null;
+  const seg = videoCorrente.segmento || (videoCorrente.usaSegmento ? leggiSegmenti()[videoCorrente.id] : null);
   comandoPlayer('pauseVideo');
   condividi(videoCorrente.title, testoVideo(videoCorrente, seg));
 });
@@ -441,6 +457,8 @@ $('btn-save-key').addEventListener('click', () => {
 
 if (!getKey()) setStatus('Prima volta? Inserisci la chiave API nelle impostazioni ⚙️');
 aggiornaQuota();
+// Dopo che tutti gli script sono pronti (anche "Mi piace"), apri l'eventuale video di un link condiviso
+document.addEventListener('DOMContentLoaded', apriVideoDaLink);
 
 // ---------- Installabilità (PWA) ----------
 if ('serviceWorker' in navigator) {
