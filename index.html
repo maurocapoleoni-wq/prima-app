@@ -21,6 +21,7 @@
     <nav class="tabs" role="tablist">
       <button id="btn-tab-cerca" role="tab" aria-selected="true">Cerca</button>
       <button id="btn-tab-novita" role="tab" aria-selected="false">Novità</button>
+      <button id="btn-tab-feed" role="tab" aria-selected="false">Feed</button>
     </nav>
 
     <!-- Scheda Cerca -->
@@ -66,12 +67,55 @@
         </div>
 
         <button id="btn-novita" class="primary">Cerca novità nei miei canali</button>
-        <p id="status-novita" class="status">Ti verrà chiesto di accedere con il tuo account Google.</p>
-        <button id="btn-esci" class="link-btn hidden">Esci dall'account Google</button>
+        <p id="status-novita" class="status">Cerca le parole chiave nei video recenti di tutti i tuoi canali. Ti verrà chiesto di accedere con il tuo account Google.</p>
       </section>
 
       <ul id="results-novita" class="results"></ul>
       <div id="pager-novita" class="pager hidden">
+        <button class="prev">◀ Precedenti</button>
+        <span class="num"></span>
+        <button class="next">Altri 4 ▶</button>
+      </div>
+    </div>
+
+    <!-- Scheda Feed: tutti i video recenti dei canali scelti -->
+    <div id="tab-feed" class="hidden">
+      <section class="novita-area">
+        <div class="nov-row">
+          <span>Canali</span>
+          <span id="feed-canali-info" class="nov-info">Nessun canale scelto</span>
+          <button id="btn-feed-scegli" type="button" class="small-btn">Scegli</button>
+        </div>
+
+        <!-- Elenco dei canali da spuntare (si apre con "Scegli") -->
+        <div id="feed-scelta" class="scelta hidden">
+          <input id="feed-filtro" type="search" placeholder="Filtra per nome">
+          <div class="scelta-azioni">
+            <button type="button" id="btn-feed-tutti" class="small-btn">Seleziona tutti</button>
+            <button type="button" id="btn-feed-nessuno" class="small-btn">Nessuno</button>
+          </div>
+          <ul id="feed-lista-canali" class="lista-canali"></ul>
+          <div class="scelta-azioni">
+            <button type="button" id="btn-feed-annulla" class="small-btn">Annulla</button>
+            <button type="button" id="btn-feed-salva" class="primary">Salva</button>
+          </div>
+        </div>
+
+        <div class="nov-row">
+          <label for="feed-giorni">Periodo</label>
+          <select id="feed-giorni">
+            <option value="7">Ultimi 7 giorni</option>
+            <option value="14">Ultimi 14 giorni</option>
+            <option value="30">Ultimi 30 giorni</option>
+          </select>
+        </div>
+
+        <button id="btn-feed" class="primary">Aggiorna il feed</button>
+        <p id="status-feed" class="status">Scegli i canali da seguire: vedrai tutti i loro video recenti.</p>
+      </section>
+
+      <ul id="results-feed" class="results"></ul>
+      <div id="pager-feed" class="pager hidden">
         <button class="prev">◀ Precedenti</button>
         <span class="num"></span>
         <button class="next">Altri 4 ▶</button>
@@ -104,6 +148,7 @@
       <input id="api-key" type="text" autocomplete="off" spellcheck="false" placeholder="AIza...">
       <button id="btn-save-key">Salva</button>
       <p class="hint">Facoltativa: se lasci vuoto, l'app usa la chiave già inclusa. Una chiave inserita qui resta salvata solo su questo telefono.</p>
+      <button id="btn-esci" class="link-btn hidden">Esci dall'account Google</button>
     </div>
   </section>
 

@@ -183,6 +183,51 @@ body {
   color: var(--text);
   font-size: 1rem;
 }
+.nov-info { flex: 1; color: var(--text); }
+.small-btn {
+  padding: 8px 14px;
+  border-radius: 18px;
+  border: none;
+  background: #333;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.small-btn:disabled { opacity: 0.5; }
+
+/* Elenco canali da spuntare */
+.scelta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--card);
+}
+.scelta input[type="search"] {
+  padding: 10px 12px;
+  border-radius: 20px;
+  border: 1px solid #333;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+}
+.scelta-azioni { display: flex; justify-content: space-between; gap: 8px; }
+.lista-canali {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.lista-canali li label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #2a2a2a;
+}
+.lista-canali input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--red); }
+
 .primary {
   padding: 12px 16px;
   border-radius: 24px;
