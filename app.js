@@ -237,58 +237,29 @@ $('pager-cerca').querySelector('.prev').addEventListener('click', () => {
 // ---------- Player ----------
 // Video in riproduzione: { id, title, channel?, thumb?, date? } (usato da "Mi piace")
 let videoCorrente = null;
-let tempoVideo = 0; // secondi già guardati, comunicati dal player (per cambiare lingua senza ricominciare)
-
-// enablejsapi=1: l'app può parlare con il player (pausa, minuto attuale)
-// hl: lingua del player, che può far scegliere la traccia audio in quella lingua se il video ce l'ha
-// cc_lang_pref: lingua dei sottotitoli quando li attivi
-function urlPlayer(id, lingua, inizio) {
+// enablejsapi=1: l'app può dare comandi al player (pausa, ricomincia)
+// hl=it / cc_lang_pref=it: menu e sottotitoli del player in italiano
+// (YouTube non permette di scegliere la traccia audio nel player incorporato)
+function urlPlayer(id) {
   return 'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0&enablejsapi=1'
-    + '&hl=' + lingua + '&cc_lang_pref=' + lingua
-    + (inizio > 0 ? '&start=' + inizio : '')
-    + '&origin=' + encodeURIComponent(location.origin);
+    + '&hl=it&cc_lang_pref=it&origin=' + encodeURIComponent(location.origin);
 }
 
-// ---------- Lingua dell'audio: Italiano / English ----------
-function linguaVideo() {
-  try { return localStorage.getItem('lingua_video') || 'it'; } catch { return 'it'; }
+// Comando ufficiale al player di YouTube, es. comandoPlayer('pauseVideo')
+function comandoPlayer(func, args = []) {
+  $('yt-frame').contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
 }
 
-function aggiornaPulsantiLingua() {
-  for (const b of document.querySelectorAll('#lingue button')) {
-    b.setAttribute('aria-pressed', String(b.dataset.lingua === linguaVideo()));
-  }
-}
-
-for (const b of document.querySelectorAll('#lingue button')) {
-  b.addEventListener('click', () => {
-    if (!videoCorrente || b.dataset.lingua === linguaVideo()) return;
-    try { localStorage.setItem('lingua_video', b.dataset.lingua); } catch {}
-    aggiornaPulsantiLingua();
-    // ricarica il player nella nuova lingua, dal punto in cui eri
-    $('yt-frame').src = urlPlayer(videoCorrente.id, b.dataset.lingua, Math.floor(tempoVideo));
-  });
-}
-
-// Il player, se glielo chiedi, comunica il minuto attuale con dei messaggi
-$('yt-frame').addEventListener('load', () => {
-  $('yt-frame').contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*');
-});
-window.addEventListener('message', (e) => {
-  try {
-    if (!/(^|\.)youtube\.com$/.test(new URL(e.origin).hostname)) return;
-    const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-    if (typeof d?.info?.currentTime === 'number') tempoVideo = d.info.currentTime;
-  } catch { /* messaggio non nostro */ }
+$('btn-ricomincia').addEventListener('click', () => {
+  comandoPlayer('seekTo', [0, true]);
+  comandoPlayer('playVideo');
 });
 
 function apriVideo(id, titolo, video) {
   videoCorrente = video || { id, title: titolo };
   document.dispatchEvent(new CustomEvent('videoaperto'));
   $('player-title').textContent = titolo;
-  tempoVideo = 0;
-  $('yt-frame').src = urlPlayer(id, linguaVideo(), 0);
-  aggiornaPulsantiLingua();
+  $('yt-frame').src = urlPlayer(id);
   $('open-yt').href = linkAppYouTube(id);
   // il link "intent" va aperto nella stessa finestra, altrimenti resterebbe una scheda vuota
   $('open-yt').target = /Android/i.test(navigator.userAgent) ? '_self' : '_blank';
@@ -332,7 +303,7 @@ function linkAppYouTube(id) {
 
 $('open-yt').addEventListener('click', () => {
   // Pausa il video nell'app, così non continua a suonare mentre guardi sulla TV
-  $('yt-frame').contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+  comandoPlayer('pauseVideo');
 });
 
 function chiudiVideo() {
