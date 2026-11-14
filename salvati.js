@@ -2,6 +2,7 @@
 // Restano solo su questo telefono, su YouTube non cambia nulla.
 // Struttura salvata: { idListaFeed: [{ id, title, channel, thumb, date, salvato }] }, il più recente prima.
 // Le liste sono collegate per id: se rinomini una lista del Feed, i video salvati la seguono.
+// Se elimini una lista dal Feed, in "Mi piace" resta con i suoi video: si cancella solo da qui.
 
 const statusSalvati = (t) => { $('status-salvati').textContent = t; };
 const leggiSalvati = () => leggi(K.salvati, {});
@@ -9,9 +10,22 @@ const scriviSalvati = (s) => scrivi(K.salvati, s);
 let listaSalvatiAttiva = null;
 let paginaSalvati = 0;
 
+// Liste di "Mi piace": quelle del Feed, poi quelle eliminate dal Feed che hanno ancora video salvati
+function listeSalvati() {
+  const feed = leggiListe().map((l) => ({ id: l.id, nome: l.nome, nelFeed: true }));
+  const s = leggiSalvati();
+  const nomi = leggi(K.salvatiNomi, {});
+  const soloQui = Object.keys(s)
+    .filter((id) => s[id].length && !feed.some((l) => l.id === id))
+    .map((id) => ({ id, nome: nomi[id] || 'Lista eliminata', nelFeed: false }));
+  return [...feed, ...soloQui];
+}
+
+const contaVideo = (n) => (n === 1 ? 'il suo video salvato' : `i suoi ${n} video salvati`);
+
 // ---------- Scheda "Mi piace" ----------
 function mostraSalvati() {
-  const liste = leggiListe();
+  const liste = listeSalvati();
   const salvati = leggiSalvati();
   if (!liste.some((l) => l.id === listaSalvatiAttiva)) listaSalvatiAttiva = liste[0].id;
 
@@ -42,11 +56,37 @@ function mostraSalvati() {
   });
   aggiornaPager($('pager-salvati'), `${paginaSalvati + 1} di ${totale}`, paginaSalvati > 0, paginaSalvati + 1 < totale, totale > 0);
 
-  const nome = liste.find((l) => l.id === listaSalvatiAttiva).nome;
+  const lista = liste.find((l) => l.id === listaSalvatiAttiva);
+  const dove = lista.nelFeed ? '' : ' (non più nel Feed)';
   statusSalvati(video.length
-    ? `${nome}: ${video.length} ${video.length === 1 ? 'video salvato' : 'video salvati'}`
-    : `Nessun video in "${nome}". Apri un video e tocca ♡ per salvarlo qui.`);
+    ? `${lista.nome}${dove}: ${video.length} ${video.length === 1 ? 'video salvato' : 'video salvati'}`
+    : `Nessun video in "${lista.nome}". Apri un video e tocca ♡ per salvarlo qui.`);
+
+  // Una lista del Feed qui si può solo svuotare; una lista non più nel Feed si elimina del tutto
+  const btn = $('btn-salvati-elimina');
+  btn.textContent = lista.nelFeed ? 'Svuota lista' : 'Elimina lista';
+  btn.disabled = video.length === 0;
 }
+
+$('btn-salvati-elimina').addEventListener('click', () => {
+  const lista = listeSalvati().find((l) => l.id === listaSalvatiAttiva);
+  const n = (leggiSalvati()[lista?.id] || []).length;
+  if (!lista || !n) return;
+  const domanda = lista.nelFeed
+    ? `Svuotare "${lista.nome}"? ${n === 1 ? 'Verrà tolto' : 'Verranno tolti'} ${contaVideo(n)}. La lista resta nel Feed.`
+    : `Eliminare la lista "${lista.nome}" e ${contaVideo(n)}? Non si può annullare.`;
+  if (!confirm(domanda)) return;
+  const s = leggiSalvati();
+  delete s[lista.id];
+  scriviSalvati(s);
+  const nomi = leggi(K.salvatiNomi, {});
+  delete nomi[lista.id];
+  scrivi(K.salvatiNomi, nomi);
+  if (!lista.nelFeed) listaSalvatiAttiva = null;
+  paginaSalvati = 0;
+  mostraSalvati();
+  statusSalvati(lista.nelFeed ? `"${lista.nome}" svuotata.` : `Lista "${lista.nome}" eliminata.`);
+});
 
 function rimuoviSalvato(idLista, idVideo) {
   const s = leggiSalvati();
@@ -77,7 +117,7 @@ function mostraSceltaSalva() {
   const dentro = listeConVideo(videoCorrente.id);
   const box = $('salva-liste');
   box.innerHTML = '';
-  for (const l of leggiListe()) {
+  for (const l of listeSalvati()) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'chip' + (dentro.has(l.id) ? ' attiva' : '');

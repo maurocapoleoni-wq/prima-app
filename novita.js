@@ -17,6 +17,7 @@ const K = {
   feedListe: 'feed_liste', feedAttiva: 'feed_lista_attiva', // feedListe: [{id, nome, canali: [{id, nome}]}]
   feedCanali: 'feed_canali', // vecchia lista unica: letta solo per creare la "Lista 1"
   salvati: 'salvati_video', // "Mi piace": { idListaFeed: [video] } (vedi salvati.js)
+  salvatiNomi: 'salvati_nomi', // nomi delle liste eliminate dal Feed che restano in "Mi piace": { id: nome }
 };
 
 function leggi(k, def) {
@@ -370,14 +371,17 @@ $('btn-feed-elimina').addEventListener('click', () => {
   const liste = leggiListe();
   if (liste.length === 1) return;
   const attiva = listaAttiva();
-  const salvati = leggi(K.salvati, {});
-  const nSalvati = (salvati[attiva.id] || []).length;
+  // I video salvati in "Mi piace" non vengono toccati: la lista resta lì con il suo nome
+  const nSalvati = (leggi(K.salvati, {})[attiva.id] || []).length;
   const avviso = nSalvati === 0 ? ''
-    : nSalvati === 1 ? ' Verrà eliminato anche il suo video salvato in "Mi piace".'
-    : ` Verranno eliminati anche i suoi ${nSalvati} video salvati in "Mi piace".`;
-  if (!confirm(`Eliminare la lista "${attiva.nome}"?${avviso} Le tue iscrizioni su YouTube non cambiano.`)) return;
-  delete salvati[attiva.id];
-  scrivi(K.salvati, salvati);
+    : nSalvati === 1 ? ' Il suo video salvato resta in "Mi piace".'
+    : ` I suoi ${nSalvati} video salvati restano in "Mi piace".`;
+  if (!confirm(`Eliminare la lista "${attiva.nome}" dal Feed?${avviso} Le tue iscrizioni su YouTube non cambiano.`)) return;
+  if (nSalvati) {
+    const nomi = leggi(K.salvatiNomi, {});
+    nomi[attiva.id] = attiva.nome;
+    scrivi(K.salvatiNomi, nomi);
+  }
   scrivi(K.feedListe, liste.filter((l) => l.id !== attiva.id));
   delete risultatiFeed[attiva.id];
   selezionaLista(leggiListe()[0].id);
