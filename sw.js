@@ -1,6 +1,6 @@
 // Service worker minimo: mette in cache i file dell'app così si apre subito.
-const CACHE = 'cerca-v22';
-const FILES = ['./', 'index.html', 'style.css', 'app.js', 'novita.js', 'salvati.js','manifest.json', 'icons/icon-192.png', 'icons/icon-512.png'];
+const CACHE = 'cerca-v23';
+const FILES = ['./', 'index.html', 'style.css', 'app.js', 'novita.js', 'salvati.js', 'spotify.js', 'manifest.json','icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   // cache: 'reload' = scarica da GitHub, ignorando le copie che il browser tiene per ~10 minuti

@@ -179,7 +179,11 @@ function cambiaSalvato(idLista) {
   const lista = s[idLista] || [];
   s[idLista] = lista.some((x) => x.id === v.id)
     ? lista.filter((x) => x.id !== v.id)
-    : [{ id: v.id, title: v.title, channel: v.channel || '', thumb: v.thumb || '', date: v.date, salvato: new Date().toISOString() }, ...lista];
+    : [{
+      id: v.id, title: v.title, channel: v.channel || '', thumb: v.thumb || '', date: v.date,
+      ...(v.fonte === 'spotify' && { fonte: 'spotify' }), // episodio di podcast
+      salvato: new Date().toISOString(),
+    }, ...lista];
   scriviSalvati(s);
   mostraSceltaSalva();
   aggiornaCuore();

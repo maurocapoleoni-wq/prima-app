@@ -22,8 +22,12 @@ function getKey() {
 function setStatus(text) { $('status').textContent = text; }
 
 // ---------- Riconoscimento vocale ----------
+// Il simbolo dell'infinito ha due lati: rosso = cerca su YouTube, verde = cerca su Spotify
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
+let fonteVoce = 'youtube';
+const pulsanteVoce = () => $(fonteVoce === 'spotify' ? 'btn-mic-sp' : 'btn-mic');
+const nomeFonte = (f) => (f === 'spotify' ? 'Spotify' : 'YouTube');
 
 if (SpeechRec) {
   rec = new SpeechRec();
@@ -31,10 +35,10 @@ if (SpeechRec) {
   rec.interimResults = true;
   rec.maxAlternatives = 1;
 
-  rec.onstart = () => { $('btn-mic').classList.add('listening'); setStatus('Ti ascolto…'); };
-  rec.onend = () => $('btn-mic').classList.remove('listening');
+  rec.onstart = () => { pulsanteVoce().classList.add('listening'); setStatus(`Ti ascolto… (${nomeFonte(fonteVoce)})`); };
+  rec.onend = () => document.querySelectorAll('.anello').forEach((b) => b.classList.remove('listening'));
   rec.onerror = (e) => {
-    $('btn-mic').classList.remove('listening');
+    rec.onend();
     if (e.error === 'not-allowed') setStatus('Permesso microfono negato. Abilitalo nelle impostazioni del browser.');
     else if (e.error === 'no-speech') setStatus('Non ho sentito nulla, riprova.');
     else setStatus('Errore microfono: ' + e.error);
@@ -43,22 +47,26 @@ if (SpeechRec) {
     const res = e.results[e.results.length - 1];
     const testo = res[0].transcript;
     setStatus('«' + testo + '»');
-    if (res.isFinal) cerca(testo);
+    if (res.isFinal) cerca(testo, fonteVoce);
   };
 } else {
   setStatus('Riconoscimento vocale non supportato: usa Chrome. Puoi scrivere la ricerca qui sotto.');
 }
 
-$('btn-mic').addEventListener('click', () => {
-  if (!rec) return;
-  if (!getKey()) { show('settings'); return; }
-  try { rec.start(); } catch { /* già in ascolto */ }
-});
+for (const [id, fonte] of [['btn-mic', 'youtube'], ['btn-mic-sp', 'spotify']]) {
+  $(id).addEventListener('click', () => {
+    if (!rec) return;
+    if (fonte === 'youtube' && !getKey()) { show('settings'); return; }
+    fonteVoce = fonte;
+    try { rec.start(); } catch { /* già in ascolto */ }
+  });
+}
 
+// Due pulsanti di invio: "YouTube" e "Spotify"
 $('text-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const q = $('text-query').value.trim();
-  if (q) cerca(q);
+  if (q) cerca(q, e.submitter?.value === 'spotify' ? 'spotify' : 'youtube');
 });
 
 // ---------- Conteggio della quota YouTube (solo le richieste di questo telefono) ----------
@@ -114,12 +122,14 @@ function formatData(iso) {
   return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 }
 
-// items: [{ id, title, channel, thumb, date?, isNew?, nota? }] (nota: testo in più sotto il titolo)
+// items: [{ id, title, channel, thumb, date?, isNew?, nota?, fonte? }] (nota: testo in più sotto il titolo)
+// fonte: 'spotify' per gli episodi di podcast (bordo verde), altrimenti YouTube (bordo rosso)
 // opzioni.onRimuovi(video): se presente, ogni video ha una ✕ per toglierlo dall'elenco
 function mostraVideo(ul, items, opzioni = {}) {
   ul.innerHTML = '';
   for (const v of items) {
     const li = document.createElement('li');
+    li.className = v.fonte === 'spotify' ? 'fonte-sp' : 'fonte-yt';
     const img = document.createElement('img');
     img.src = v.thumb || '';
     img.alt = '';
@@ -136,7 +146,8 @@ function mostraVideo(ul, items, opzioni = {}) {
     t.textContent = v.title;
     const c = document.createElement('p');
     c.className = 'channel';
-    c.textContent = v.channel + (v.date ? ' · ' + formatData(v.date) : '') + (v.nota ? ' · ' + v.nota : '');
+    c.textContent = (v.fonte === 'spotify' ? '🎧 ' : '') + v.channel
+      + (v.date ? ' · ' + formatData(v.date) : '') + (v.nota ? ' · ' + v.nota : '');
     meta.append(t, c);
     li.append(img, meta);
     if (opzioni.onRimuovi) {
@@ -164,20 +175,22 @@ function aggiornaPager(el, etichetta, puoiPrima, puoiDopo, visibile) {
   el.querySelector('.num').textContent = etichetta;
 }
 
-// ---------- Ricerca YouTube ----------
-// token[i] = codice di YouTube per chiedere la pagina i (la prima non ne ha bisogno)
-const ricerca = { query: '', pagine: [], token: [], idx: 0 };
+// ---------- Ricerca (YouTube o Spotify) ----------
+// token[i] = come chiedere la pagina i (la prima non ne ha bisogno); undefined = non ci sono altre pagine
+const ricerca = { query: '', fonte: 'youtube', pagine: [], token: [], idx: 0 };
 
-async function cerca(query) {
-  if (!getKey()) { show('settings'); return; }
-  Object.assign(ricerca, { query, pagine: [], token: [undefined], idx: 0 });
+async function cerca(query, fonte = 'youtube') {
+  if (fonte === 'youtube' && !getKey()) { show('settings'); return; }
+  Object.assign(ricerca, { query, fonte, pagine: [], token: [undefined], idx: 0 });
   $('results').innerHTML = '';
   $('pager-cerca').classList.add('hidden');
-  setStatus('Cerco «' + query + '»…');
+  setStatus(`Cerco «${query}» su ${nomeFonte(fonte)}…`);
   if (await caricaPaginaRicerca(0)) mostraPaginaRicerca();
 }
 
+// Spotify: caricaPaginaSpotify è in spotify.js
 async function caricaPaginaRicerca(i) {
+  if (ricerca.fonte === 'spotify') return caricaPaginaSpotify(i);
   const url = new URL('https://www.googleapis.com/youtube/v3/search');
   url.search = new URLSearchParams({
     part: 'snippet',
@@ -212,7 +225,9 @@ async function caricaPaginaRicerca(i) {
 function mostraPaginaRicerca() {
   const items = ricerca.pagine[ricerca.idx];
   mostraVideo($('results'), items);
-  setStatus(items.length ? 'Risultati per «' + ricerca.query + '»' : 'Nessun video trovato.');
+  const cosa = ricerca.fonte === 'spotify' ? 'Episodi su Spotify' : 'Video su YouTube';
+  setStatus(items.length ? `${cosa} per «${ricerca.query}»`
+    : (ricerca.fonte === 'spotify' ? 'Nessun episodio trovato.' : 'Nessun video trovato.'));
   const altre = ricerca.idx + 1 < ricerca.pagine.length || !!ricerca.token[ricerca.idx + 1];
   aggiornaPager($('pager-cerca'), 'Pagina ' + (ricerca.idx + 1), ricerca.idx > 0, altre, items.length > 0);
 }
@@ -331,6 +346,19 @@ function apriVideo(id, titolo, video) {
   videoCorrente = video || { id, title: titolo };
   document.dispatchEvent(new CustomEvent('videoaperto'));
   $('player-title').textContent = titolo;
+  // Episodio di un podcast: lettore di Spotify, senza i pulsanti solo per YouTube
+  const spotify = video?.fonte === 'spotify';
+  $('player').classList.toggle('player-spotify', spotify);
+  if (spotify) {
+    $('yt-frame').src = 'https://open.spotify.com/embed/episode/' + encodeURIComponent(id) + '?utm_source=generator';
+    $('open-sp').href = 'https://open.spotify.com/episode/' + encodeURIComponent(id);
+    const box = $('frame-wrap');
+    box.style.aspectRatio = 'auto';
+    box.style.width = '100%';
+    show('player');
+    history.pushState({ v: 'player' }, '');
+    return;
+  }
   const seg = video?.segmento || (video?.usaSegmento ? leggiSegmenti()[id] : null);
   tempoVideo = seg?.inizio || 0;
   $('yt-frame').src = urlPlayer(id, seg);
@@ -380,6 +408,7 @@ function condividi(titolo, testo) {
 // YouTube tutti i link youtube.com (che ignorerebbe la fine), ma non questo: si apre la nostra app,
 // che fa partire e fermare il video nei punti giusti (vedi apriVideoDaLink).
 function linkVideo(v, seg) {
+  if (v.fonte === 'spotify') return 'https://open.spotify.com/episode/' + v.id;
   if (!seg) return 'https://www.youtube.com/watch?v=' + v.id;
   const p = new URLSearchParams({ v: v.id });
   if (seg.inizio > 0) p.set('start', seg.inizio);
@@ -388,9 +417,10 @@ function linkVideo(v, seg) {
   return new URL('./', location.href).href + '?' + p;
 }
 
-// Testo per un video: titolo, eventuale segmento e link
+// Testo per un video: titolo, eventuale segmento e link (i segmenti valgono solo per YouTube)
 function testoVideo(v, seg) {
-  const parte = seg ? ` (dal minuto ${formatTempo(seg.inizio || 0)}${seg.fine != null ? ' al ' + formatTempo(seg.fine) : ''})` : '';
+  if (v.fonte === 'spotify') seg = null;
+  const parte = seg ?` (dal minuto ${formatTempo(seg.inizio || 0)}${seg.fine != null ? ' al ' + formatTempo(seg.fine) : ''})` : '';
   return `${v.title}${parte}\n${linkVideo(v, seg)}`;
 }
 

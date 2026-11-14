@@ -4,6 +4,7 @@
   --text: #f1f1f1;
   --muted: #aaaaaa;
   --red: #ff0033;
+  --green: #1db954; /* Spotify */
 }
 
 * { box-sizing: border-box; }
@@ -41,22 +42,33 @@ body {
   padding: 24px 16px 8px;
 }
 
-.mic {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
+/* Simbolo dell'infinito: due anelli che si toccano al centro */
+.infinito { display: flex; justify-content: center; }
+.anello {
+  width: 140px;
+  height: 127px;
+  padding: 0;
   border: none;
-  background: var(--red);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 6px 20px rgba(255, 0, 51, 0.35);
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.mic svg { width: 56px; height: 56px; fill: #fff; }
-.mic.listening { animation: pulse 1.2s infinite; }
-
-@keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(255, 0, 51, 0.6); }
-  100% { box-shadow: 0 0 0 28px rgba(255, 0, 51, 0); }
+.anello svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.anello.yt .forma { fill: var(--red); }
+.anello.sp .forma { fill: var(--green); }
+.anello:active svg { transform: scale(0.96); }
+.anello.listening .forma { animation: respiro 0.9s ease-in-out infinite; }
+@keyframes respiro {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.infinito-etichette {
+  display: flex;
+  justify-content: space-between;
+  width: 220px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .status { color: var(--muted); text-align: center; min-height: 1.4em; }
@@ -79,6 +91,10 @@ body {
   color: var(--text);
   font-size: 1rem;
 }
+.text-form input { min-width: 0; } /* si stringe per far stare i due pulsanti */
+.text-form .invio-yt, .text-form .invio-sp { flex-shrink: 0; padding: 10px; font-size: 0.85rem; font-weight: 600; }
+.text-form .invio-yt { background: var(--red); color: #fff; }
+.text-form .invio-sp { background: var(--green); color: #0f0f0f; }
 
 .results {
   list-style: none;
@@ -96,7 +112,11 @@ body {
   overflow: hidden;
   cursor: pointer;
 }
+/* Striscia colorata a sinistra: rossa = video YouTube, verde = episodio Spotify */
+.results li.fonte-yt { box-shadow: inset 4px 0 0 var(--red); }
+.results li.fonte-sp { box-shadow: inset 4px 0 0 var(--green); }
 .results img { width: 160px; height: 90px; object-fit: cover; flex-shrink: 0; }
+.results li.fonte-sp img { width: 90px; } /* le copertine dei podcast sono quadrate */
 .results .meta { padding: 8px 8px 8px 0; min-width: 0; }
 .results .title {
   font-size: 0.95rem;
@@ -152,6 +172,13 @@ body {
   font-weight: 600;
 }
 .tv-area .hint { margin: 0; text-align: center; }
+.tv-btn.tv-sp { background: var(--green); color: #0f0f0f; }
+
+/* Player per YouTube o per Spotify: ognuno mostra solo i suoi pulsanti */
+.solo-sp { display: none !important; }
+#player.player-spotify .solo-yt { display: none !important; }
+#player.player-spotify .solo-sp { display: block !important; }
+#player.player-spotify .frame-wrap { height: 352px; background: transparent; }
 
 .condividi { margin-top: 12px; }
 
