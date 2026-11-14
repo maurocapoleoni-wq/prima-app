@@ -2,6 +2,10 @@
 const NUM_RISULTATI = 4;
 const KEY_STORAGE = 'yt_api_key';
 
+// Chiave API di YouTube condivisa: incollala tra gli apici, es. 'AIza...'.
+// Una chiave inserita in ⚙️ sul telefono ha la precedenza su questa.
+const CHIAVE_PREDEFINITA = 'AIzaSyBw5xRFHaI4rOFhDdMMcF8ZM6WMEksPCR0';
+
 const $ = (id) => document.getElementById(id);
 const views = { home: $('home'), player: $('player'), settings: $('settings') };
 
@@ -10,7 +14,9 @@ function show(name) {
 }
 
 function getKey() {
-  try { return localStorage.getItem(KEY_STORAGE) || ''; } catch { return ''; }
+  let personale = '';
+  try { personale = localStorage.getItem(KEY_STORAGE) || ''; } catch {}
+  return personale || CHIAVE_PREDEFINITA;
 }
 
 function setStatus(text) { $('status').textContent = text; }
@@ -133,7 +139,9 @@ window.addEventListener('popstate', () => {
 
 // ---------- Impostazioni ----------
 $('btn-settings').addEventListener('click', () => {
-  $('api-key').value = getKey();
+  let personale = '';
+  try { personale = localStorage.getItem(KEY_STORAGE) || ''; } catch {}
+  $('api-key').value = personale;
   show('settings');
 });
 $('btn-settings-back').addEventListener('click', () => show('home'));
