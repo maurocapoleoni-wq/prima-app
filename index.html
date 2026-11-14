@@ -18,21 +18,65 @@
       <button id="btn-settings" class="icon-btn" aria-label="Impostazioni">⚙️</button>
     </header>
 
-    <section class="mic-area">
-      <button id="btn-mic" class="mic" aria-label="Parla per cercare">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
-        </svg>
-      </button>
-      <p id="status" class="status">Tocca il microfono e parla</p>
+    <nav class="tabs" role="tablist">
+      <button id="btn-tab-cerca" role="tab" aria-selected="true">Cerca</button>
+      <button id="btn-tab-novita" role="tab" aria-selected="false">Novità</button>
+    </nav>
 
-      <form id="text-form" class="text-form">
-        <input id="text-query" type="search" placeholder="…oppure scrivi qui" enterkeyhint="search">
-        <button type="submit">Cerca</button>
-      </form>
-    </section>
+    <!-- Scheda Cerca -->
+    <div id="tab-cerca">
+      <section class="mic-area">
+        <button id="btn-mic" class="mic" aria-label="Parla per cercare">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
+          </svg>
+        </button>
+        <p id="status" class="status">Tocca il microfono e parla</p>
 
-    <ul id="results" class="results"></ul>
+        <form id="text-form" class="text-form">
+          <input id="text-query" type="search" placeholder="…oppure scrivi qui" enterkeyhint="search">
+          <button type="submit">Cerca</button>
+        </form>
+      </section>
+
+      <ul id="results" class="results"></ul>
+      <div id="pager-cerca" class="pager hidden">
+        <button class="prev">◀ Precedenti</button>
+        <span class="num"></span>
+        <button class="next">Altri 4 ▶</button>
+      </div>
+    </div>
+
+    <!-- Scheda Novità: video recenti dei canali a cui sei iscritto -->
+    <div id="tab-novita" class="hidden">
+      <section class="novita-area">
+        <form id="nov-form" class="text-form">
+          <input id="nov-parola" type="text" placeholder="Parola chiave, es. ricette" enterkeyhint="done">
+          <button type="submit">Aggiungi</button>
+        </form>
+        <div id="nov-parole" class="chips"></div>
+
+        <div class="nov-row">
+          <label for="nov-giorni">Periodo</label>
+          <select id="nov-giorni">
+            <option value="7">Ultimi 7 giorni</option>
+            <option value="14">Ultimi 14 giorni</option>
+            <option value="30">Ultimi 30 giorni</option>
+          </select>
+        </div>
+
+        <button id="btn-novita" class="primary">Cerca novità nei miei canali</button>
+        <p id="status-novita" class="status">Ti verrà chiesto di accedere con il tuo account Google.</p>
+        <button id="btn-esci" class="link-btn hidden">Esci dall'account Google</button>
+      </section>
+
+      <ul id="results-novita" class="results"></ul>
+      <div id="pager-novita" class="pager hidden">
+        <button class="prev">◀ Precedenti</button>
+        <span class="num"></span>
+        <button class="next">Altri 4 ▶</button>
+      </div>
+    </div>
   </main>
 
   <!-- Schermata player -->
@@ -64,5 +108,6 @@
   </section>
 
   <script src="app.js"></script>
+  <script src="novita.js"></script>
 </body>
 </html>

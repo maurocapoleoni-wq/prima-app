@@ -1,6 +1,6 @@
 // Service worker minimo: mette in cache i file dell'app così si apre subito.
-const CACHE = 'cerca-v3';
-const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png'];
+const CACHE = 'cerca-v4';
+const FILES = ['./', 'index.html', 'style.css', 'app.js', 'novita.js','manifest.json', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)));
