@@ -269,8 +269,8 @@ $('nov-form').addEventListener('submit', (e) => {
   mostraParole();
 });
 
-// ======================= FEED (fino a 14 liste di canali scelti) =======================
-const MAX_LISTE = 14;
+// ======================= FEED (fino a 16 liste di canali scelti) =======================
+const MAX_LISTE = 16;
 const GIORNI_MESE = 30;
 const statusFeed = (t) => { $('status-feed').textContent = t; };
 const elencoFeed = creaElenco('results-feed', 'pager-feed');
