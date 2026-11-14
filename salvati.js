@@ -181,7 +181,8 @@ function cambiaSalvato(idLista) {
     ? lista.filter((x) => x.id !== v.id)
     : [{
       id: v.id, title: v.title, channel: v.channel || '', thumb: v.thumb || '', date: v.date,
-      ...(v.fonte === 'spotify' && { fonte: 'spotify' }), // episodio di podcast
+      // episodio di podcast: serve anche l'indirizzo dell'audio per riascoltarlo da Mi piace
+      ...(v.fonte === 'podcast' && { fonte: 'podcast', audio: v.audio, cover: v.cover, link: v.link }),
       salvato: new Date().toISOString(),
     }, ...lista];
   scriviSalvati(s);

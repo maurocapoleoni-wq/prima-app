@@ -22,12 +22,12 @@ function getKey() {
 function setStatus(text) { $('status').textContent = text; }
 
 // ---------- Riconoscimento vocale ----------
-// Il simbolo dell'infinito ha due lati: rosso = cerca su YouTube, verde = cerca su Spotify
+// Il simbolo dell'infinito ha due lati: rosso = cerca video su YouTube, verde = cerca podcast
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null;
 let fonteVoce = 'youtube';
-const pulsanteVoce = () => $(fonteVoce === 'spotify' ? 'btn-mic-sp' : 'btn-mic');
-const nomeFonte = (f) => (f === 'spotify' ? 'Spotify' : 'YouTube');
+const pulsanteVoce = () => $(fonteVoce === 'podcast' ? 'btn-mic-sp' : 'btn-mic');
+const nomeFonte = (f) => (f === 'podcast' ? 'Podcast' : 'YouTube');
 
 if (SpeechRec) {
   rec = new SpeechRec();
@@ -53,7 +53,7 @@ if (SpeechRec) {
   setStatus('Riconoscimento vocale non supportato: usa Chrome. Puoi scrivere la ricerca qui sotto.');
 }
 
-for (const [id, fonte] of [['btn-mic', 'youtube'], ['btn-mic-sp', 'spotify']]) {
+for (const [id, fonte] of [['btn-mic', 'youtube'], ['btn-mic-sp', 'podcast']]) {
   $(id).addEventListener('click', () => {
     if (!rec) return;
     if (fonte === 'youtube' && !getKey()) { show('settings'); return; }
@@ -62,11 +62,11 @@ for (const [id, fonte] of [['btn-mic', 'youtube'], ['btn-mic-sp', 'spotify']]) {
   });
 }
 
-// Due pulsanti di invio: "YouTube" e "Spotify"
+// Due pulsanti di invio: "YouTube" e "Podcast"
 $('text-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const q = $('text-query').value.trim();
-  if (q) cerca(q, e.submitter?.value === 'spotify' ? 'spotify' : 'youtube');
+  if (q) cerca(q, e.submitter?.value === 'podcast' ? 'podcast' : 'youtube');
 });
 
 // ---------- Conteggio della quota YouTube (solo le richieste di questo telefono) ----------
@@ -123,13 +123,13 @@ function formatData(iso) {
 }
 
 // items: [{ id, title, channel, thumb, date?, isNew?, nota?, fonte? }] (nota: testo in più sotto il titolo)
-// fonte: 'spotify' per gli episodi di podcast (bordo verde), altrimenti YouTube (bordo rosso)
+// fonte: 'podcast' per gli episodi di podcast (bordo verde), altrimenti YouTube (bordo rosso)
 // opzioni.onRimuovi(video): se presente, ogni video ha una ✕ per toglierlo dall'elenco
 function mostraVideo(ul, items, opzioni = {}) {
   ul.innerHTML = '';
   for (const v of items) {
     const li = document.createElement('li');
-    li.className = v.fonte === 'spotify' ? 'fonte-sp' : 'fonte-yt';
+    li.className = v.fonte === 'podcast' ? 'fonte-pod' : 'fonte-yt';
     const img = document.createElement('img');
     img.src = v.thumb || '';
     img.alt = '';
@@ -146,7 +146,7 @@ function mostraVideo(ul, items, opzioni = {}) {
     t.textContent = v.title;
     const c = document.createElement('p');
     c.className = 'channel';
-    c.textContent = (v.fonte === 'spotify' ? '🎧 ' : '') + v.channel
+    c.textContent = (v.fonte === 'podcast' ? '🎧 ' : '') + v.channel
       + (v.date ? ' · ' + formatData(v.date) : '') + (v.nota ? ' · ' + v.nota : '');
     meta.append(t, c);
     li.append(img, meta);
@@ -175,22 +175,22 @@ function aggiornaPager(el, etichetta, puoiPrima, puoiDopo, visibile) {
   el.querySelector('.num').textContent = etichetta;
 }
 
-// ---------- Ricerca (YouTube o Spotify) ----------
+// ---------- Ricerca (YouTube o Podcast) ----------
 // token[i] = come chiedere la pagina i (la prima non ne ha bisogno); undefined = non ci sono altre pagine
 const ricerca = { query: '', fonte: 'youtube', pagine: [], token: [], idx: 0 };
 
 async function cerca(query, fonte = 'youtube') {
   if (fonte === 'youtube' && !getKey()) { show('settings'); return; }
-  Object.assign(ricerca, { query, fonte, pagine: [], token: [undefined], idx: 0 });
+  Object.assign(ricerca, { query, fonte, pagine: [], token: [undefined], idx: 0, tuttiPodcast: null });
   $('results').innerHTML = '';
   $('pager-cerca').classList.add('hidden');
   setStatus(`Cerco «${query}» su ${nomeFonte(fonte)}…`);
   if (await caricaPaginaRicerca(0)) mostraPaginaRicerca();
 }
 
-// Spotify: caricaPaginaSpotify è in spotify.js
+// Podcast: caricaPaginaPodcast è in podcast.js
 async function caricaPaginaRicerca(i) {
-  if (ricerca.fonte === 'spotify') return caricaPaginaSpotify(i);
+  if (ricerca.fonte === 'podcast') return caricaPaginaPodcast(i);
   const url = new URL('https://www.googleapis.com/youtube/v3/search');
   url.search = new URLSearchParams({
     part: 'snippet',
@@ -225,9 +225,9 @@ async function caricaPaginaRicerca(i) {
 function mostraPaginaRicerca() {
   const items = ricerca.pagine[ricerca.idx];
   mostraVideo($('results'), items);
-  const cosa = ricerca.fonte === 'spotify' ? 'Episodi su Spotify' : 'Video su YouTube';
+  const cosa = ricerca.fonte === 'podcast' ? 'Episodi di podcast' : 'Video su YouTube';
   setStatus(items.length ? `${cosa} per «${ricerca.query}»`
-    : (ricerca.fonte === 'spotify' ? 'Nessun episodio trovato.' : 'Nessun video trovato.'));
+    : (ricerca.fonte === 'podcast' ? 'Nessun episodio trovato.' : 'Nessun video trovato.'));
   const altre = ricerca.idx + 1 < ricerca.pagine.length || !!ricerca.token[ricerca.idx + 1];
   aggiornaPager($('pager-cerca'), 'Pagina ' + (ricerca.idx + 1), ricerca.idx > 0, altre, items.length > 0);
 }
@@ -313,9 +313,12 @@ function aggiornaSegmento(messaggio) {
   $('btn-seg-azzera').disabled = !seg;
 }
 
+// Secondo attuale: dal lettore audio per i podcast, dai messaggi del player per YouTube
+const tempoAttuale = () => (videoCorrente?.fonte === 'podcast' ? $('audio-player').currentTime : tempoVideo);
+
 $('btn-seg-inizio').addEventListener('click', () => {
   if (!videoCorrente) return;
-  const seg = { ...leggiSegmenti()[videoCorrente.id], inizio: Math.floor(tempoVideo) };
+  const seg = { ...leggiSegmenti()[videoCorrente.id], inizio: Math.floor(tempoAttuale()) };
   if (seg.fine != null && seg.fine <= seg.inizio) delete seg.fine; // la vecchia fine ora sarebbe prima
   scriviSegmento(videoCorrente.id, seg);
   aggiornaSegmento();
@@ -323,7 +326,7 @@ $('btn-seg-inizio').addEventListener('click', () => {
 
 $('btn-seg-fine').addEventListener('click', () => {
   if (!videoCorrente) return;
-  const fine = Math.ceil(tempoVideo);
+  const fine = Math.ceil(tempoAttuale());
   const seg = { ...leggiSegmenti()[videoCorrente.id] };
   if (seg.inizio != null && fine <= seg.inizio) {
     aggiornaSegmento(`La fine deve venire dopo l'inizio (${formatTempo(seg.inizio)}).`);
@@ -346,20 +349,19 @@ function apriVideo(id, titolo, video) {
   videoCorrente = video || { id, title: titolo };
   document.dispatchEvent(new CustomEvent('videoaperto'));
   $('player-title').textContent = titolo;
-  // Episodio di un podcast: lettore di Spotify, senza i pulsanti solo per YouTube
-  const spotify = video?.fonte === 'spotify';
-  $('player').classList.toggle('player-spotify', spotify);
-  if (spotify) {
-    $('yt-frame').src = 'https://open.spotify.com/embed/episode/' + encodeURIComponent(id) + '?utm_source=generator';
-    $('open-sp').href = 'https://open.spotify.com/episode/' + encodeURIComponent(id);
-    const box = $('frame-wrap');
-    box.style.aspectRatio = 'auto';
-    box.style.width = '100%';
+  const seg = video?.segmento || (video?.usaSegmento ? leggiSegmenti()[id] : null);
+  // Episodio di un podcast: lettore audio dell'app, senza i pulsanti solo per YouTube
+  const podcast = video?.fonte === 'podcast';
+  $('player').classList.toggle('player-podcast', podcast);
+  if (podcast) {
+    $('yt-frame').src = 'about:blank';
+    apriPodcast(video, seg);
+    aggiornaSegmento(seg ? 'Riproduco il segmento: ' + testoSegmento(seg) : '');
     show('player');
     history.pushState({ v: 'player' }, '');
     return;
   }
-  const seg = video?.segmento || (video?.usaSegmento ? leggiSegmenti()[id] : null);
+  fermaAudio();
   tempoVideo = seg?.inizio || 0;
   $('yt-frame').src = urlPlayer(id, seg);
   aggiornaSegmento(seg ? 'Riproduco il segmento: ' + testoSegmento(seg) : '');
@@ -370,6 +372,48 @@ function apriVideo(id, titolo, video) {
   show('player');
   history.pushState({ v: 'player' }, '');
   formatoVideo(id);
+}
+
+// ---------- Lettore audio per i podcast ----------
+let fineSegmentoAudio = null; // secondo in cui fermarsi (segmento), oppure null
+
+function apriPodcast(v, seg) {
+  const audio = $('audio-player');
+  $('podcast-cover').src = v.cover || v.thumb || '';
+  $('podcast-show').textContent = v.channel || '';
+  $('open-sp').href = linkCercaSpotify(v);
+  fineSegmentoAudio = seg?.fine ?? null;
+  audio.src = v.audio;
+  audio.addEventListener('loadedmetadata', () => {
+    if (seg?.inizio > 0) audio.currentTime = seg.inizio;
+  }, { once: true });
+  audio.play().catch(() => { /* il browser vuole un tocco su ▶ */ });
+  // Titolo e copertina anche nella barra delle notifiche / schermata di blocco
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: v.title, artist: v.channel || '', artwork: v.cover ? [{ src: v.cover, sizes: '600x600' }] : [],
+    });
+  }
+}
+
+// Arrivato alla fine del segmento, si ferma
+$('audio-player').addEventListener('timeupdate', () => {
+  const audio = $('audio-player');
+  if (fineSegmentoAudio != null && audio.currentTime >= fineSegmentoAudio) {
+    audio.pause();
+    fineSegmentoAudio = null; // se riparti a mano, va avanti
+  }
+});
+
+$('audio-player').addEventListener('error', () => {
+  if (videoCorrente?.fonte === 'podcast') aggiornaSegmento('Questo episodio non si riesce a riprodurre qui: prova "Cerca in Spotify".');
+});
+
+function fermaAudio() {
+  const audio = $('audio-player');
+  audio.pause();
+  audio.removeAttribute('src');
+  audio.load();
 }
 
 // Riquadro del player con le proporzioni del video: largo quanto lo schermo,
@@ -408,7 +452,7 @@ function condividi(titolo, testo) {
 // YouTube tutti i link youtube.com (che ignorerebbe la fine), ma non questo: si apre la nostra app,
 // che fa partire e fermare il video nei punti giusti (vedi apriVideoDaLink).
 function linkVideo(v, seg) {
-  if (v.fonte === 'spotify') return 'https://open.spotify.com/episode/' + v.id;
+  if (v.fonte === 'podcast') return v.link || v.audio; // pagina dell'episodio su Apple Podcasts
   if (!seg) return 'https://www.youtube.com/watch?v=' + v.id;
   const p = new URLSearchParams({ v: v.id });
   if (seg.inizio > 0) p.set('start', seg.inizio);
@@ -417,10 +461,10 @@ function linkVideo(v, seg) {
   return new URL('./', location.href).href + '?' + p;
 }
 
-// Testo per un video: titolo, eventuale segmento e link (i segmenti valgono solo per YouTube)
+// Testo per un video: titolo, eventuale segmento e link
+// (per i podcast il link non può contenere il segmento: i minuti restano scritti nel messaggio)
 function testoVideo(v, seg) {
-  if (v.fonte === 'spotify') seg = null;
-  const parte = seg ?` (dal minuto ${formatTempo(seg.inizio || 0)}${seg.fine != null ? ' al ' + formatTempo(seg.fine) : ''})` : '';
+  const parte = seg ? ` (dal minuto ${formatTempo(seg.inizio || 0)}${seg.fine != null ? ' al ' + formatTempo(seg.fine) : ''})` : '';
   return `${v.title}${parte}\n${linkVideo(v, seg)}`;
 }
 
@@ -440,6 +484,7 @@ $('btn-condividi').addEventListener('click', () => {
   if (!videoCorrente) return;
   const seg = videoCorrente.segmento || (videoCorrente.usaSegmento ? leggiSegmenti()[videoCorrente.id] : null);
   comandoPlayer('pauseVideo');
+  $('audio-player').pause();
   condividi(videoCorrente.title, testoVideo(videoCorrente, seg));
 });
 
@@ -461,6 +506,7 @@ $('open-yt').addEventListener('click', () => {
 
 function chiudiVideo() {
   $('yt-frame').src = 'about:blank';
+  fermaAudio();
   show('home');
   document.dispatchEvent(new CustomEvent('videochiuso'));
 }

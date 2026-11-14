@@ -28,7 +28,7 @@
     <!-- Scheda Cerca -->
     <div id="tab-cerca">
       <section class="mic-area">
-        <!-- Simbolo dell'infinito: anello rosso = cerca su YouTube, anello verde = cerca su Spotify -->
+        <!-- Simbolo dell'infinito: anello rosso = cerca video su YouTube, anello verde = cerca podcast -->
         <div class="infinito" role="group" aria-label="Cerca con la voce">
           <button id="btn-mic" class="anello yt" aria-label="Parla per cercare video su YouTube">
             <svg viewBox="20 15 110 100" aria-hidden="true">
@@ -37,7 +37,7 @@
               <path d="M66 54 L 84 65 L 66 76 Z" fill="#fff"/>
             </svg>
           </button>
-          <button id="btn-mic-sp" class="anello sp" aria-label="Parla per cercare podcast su Spotify">
+          <button id="btn-mic-sp" class="anello sp" aria-label="Parla per cercare podcast">
             <svg viewBox="130 15 110 100" aria-hidden="true">
               <path class="forma" d="M130 65 C 155 20, 230 20, 230 65 C 230 110, 155 110, 130 65 Z"/>
               <path d="M172 72 V 64 A 16 16 0 0 1 204 64 V 72" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
@@ -46,13 +46,13 @@
             </svg>
           </button>
         </div>
-        <div class="infinito-etichette"><span>YouTube</span><span>Spotify</span></div>
+        <div class="infinito-etichette"><span>YouTube</span><span>Podcast</span></div>
         <p id="status" class="status">Tocca un lato del simbolo e parla</p>
 
         <form id="text-form" class="text-form">
           <input id="text-query" type="search" placeholder="…oppure scrivi qui" enterkeyhint="search">
           <button type="submit" value="youtube" class="invio-yt">YouTube</button>
-          <button type="submit" value="spotify" class="invio-sp">Spotify</button>
+          <button type="submit" value="podcast" class="invio-sp">Podcast</button>
         </form>
         <p class="quota"></p>
       </section>
@@ -179,10 +179,16 @@
       <h2 id="player-title" class="player-title"></h2>
       <button id="btn-salva" class="icon-btn cuore" aria-label="Metti Mi piace">♡</button>
     </header>
-    <div id="frame-wrap" class="frame-wrap">
+    <div id="frame-wrap" class="frame-wrap solo-yt">
       <iframe id="yt-frame" title="Video YouTube"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen></iframe>
+    </div>
+    <!-- Lettore per gli episodi di podcast: copertina + controlli audio -->
+    <div class="podcast-box solo-pod">
+      <img id="podcast-cover" alt="">
+      <p id="podcast-show" class="podcast-show"></p>
+      <audio id="audio-player" controls preload="metadata"></audio>
     </div>
     <!-- Scelta delle liste in cui salvare il video (si apre con il cuore) -->
     <div id="salva-scelta" class="scelta salva-scelta hidden">
@@ -193,11 +199,11 @@
     <div class="tv-area">
       <a id="open-yt" class="tv-btn solo-yt" target="_blank" rel="noopener">📺 Guarda sulla TV</a>
       <p class="hint solo-yt">Si apre YouTube: tocca l'icona di trasmissione in alto.</p>
-      <!-- Episodi Spotify: si apre l'app Spotify (da lì anche Spotify Connect verso TV e casse) -->
-      <a id="open-sp" class="tv-btn tv-sp solo-sp" target="_blank" rel="noopener">🎧 Apri in Spotify</a>
+      <!-- Podcast: cerca lo stesso episodio nell'app Spotify (da lì anche Spotify Connect verso TV e casse) -->
+      <a id="open-sp" class="tv-btn tv-sp solo-pod" target="_blank" rel="noopener">🎧 Cerca in Spotify</a>
       <button id="btn-condividi" type="button" class="small-btn condividi">↗ Condividi (WhatsApp…)</button>
       <!-- Segmento: inizio e fine segnati, usati quando il video si apre da "Mi piace" -->
-      <div class="segmento solo-yt">
+      <div class="segmento">
         <div class="segmento-pulsanti">
           <button id="btn-seg-inizio" type="button" class="small-btn">⏵ Segna inizio</button>
           <button id="btn-seg-fine" type="button" class="small-btn">⏹ Segna fine</button>
@@ -220,14 +226,12 @@
       <input id="api-key" type="text" autocomplete="off" spellcheck="false" placeholder="AIza...">
       <button id="btn-save-key">Salva</button>
       <p class="hint">Facoltativa: se lasci vuoto, l'app usa la chiave già inclusa. Una chiave inserita qui resta salvata solo su questo telefono.</p>
-      <button id="btn-esci" class="link-btn hidden">Esci dall'account Google</button>
-      <button id="btn-esci-sp" class="link-btn hidden">Esci da Spotify</button>
-    </div>
+      <button id="btn-esci" class="link-btn hidden">Esci dall'account Google</button>    </div>
   </section>
 
   <script src="app.js"></script>
   <script src="novita.js"></script>
   <script src="salvati.js"></script>
-  <script src="spotify.js"></script>
+  <script src="podcast.js"></script>
 </body>
 </html>

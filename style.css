@@ -4,7 +4,7 @@
   --text: #f1f1f1;
   --muted: #aaaaaa;
   --red: #ff0033;
-  --green: #1db954; /* Spotify */
+  --green: #1db954; /* podcast */
 }
 
 * { box-sizing: border-box; }
@@ -112,11 +112,11 @@ body {
   overflow: hidden;
   cursor: pointer;
 }
-/* Striscia colorata a sinistra: rossa = video YouTube, verde = episodio Spotify */
+/* Striscia colorata a sinistra: rossa = video YouTube, verde = episodio di podcast */
 .results li.fonte-yt { box-shadow: inset 4px 0 0 var(--red); }
-.results li.fonte-sp { box-shadow: inset 4px 0 0 var(--green); }
+.results li.fonte-pod { box-shadow: inset 4px 0 0 var(--green); }
 .results img { width: 160px; height: 90px; object-fit: cover; flex-shrink: 0; }
-.results li.fonte-sp img { width: 90px; } /* le copertine dei podcast sono quadrate */
+.results li.fonte-pod img { width: 90px; } /* le copertine dei podcast sono quadrate */
 .results .meta { padding: 8px 8px 8px 0; min-width: 0; }
 .results .title {
   font-size: 0.95rem;
@@ -174,11 +174,16 @@ body {
 .tv-area .hint { margin: 0; text-align: center; }
 .tv-btn.tv-sp { background: var(--green); color: #0f0f0f; }
 
-/* Player per YouTube o per Spotify: ognuno mostra solo i suoi pulsanti */
-.solo-sp { display: none !important; }
-#player.player-spotify .solo-yt { display: none !important; }
-#player.player-spotify .solo-sp { display: block !important; }
-#player.player-spotify .frame-wrap { height: 352px; background: transparent; }
+/* Player per YouTube o per i podcast: ognuno mostra solo le sue parti */
+.solo-pod { display: none !important; }
+#player.player-podcast .solo-yt { display: none !important; }
+#player.player-podcast .solo-pod { display: flex !important; }
+#player.player-podcast a.solo-pod { display: block !important; }
+
+.podcast-box { flex-direction: column; align-items: center; gap: 8px; padding: 8px 16px 0; }
+#podcast-cover { width: min(70vw, 280px); aspect-ratio: 1; object-fit: cover; border-radius: 12px; background: var(--card); }
+.podcast-show { margin: 0; color: var(--muted); font-size: 0.9rem; text-align: center; }
+#audio-player { width: 100%; max-width: 480px; }
 
 .condividi { margin-top: 12px; }
 
