@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f0f0f">
+  <title>Cerca e Guarda</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Schermata principale: microfono + risultati -->
+  <main id="home" class="view">
+    <header class="top">
+      <h1>Cerca e Guarda</h1>
+      <button id="btn-settings" class="icon-btn" aria-label="Impostazioni">⚙️</button>
+    </header>
+
+    <section class="mic-area">
+      <button id="btn-mic" class="mic" aria-label="Parla per cercare">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
+        </svg>
+      </button>
+      <p id="status" class="status">Tocca il microfono e parla</p>
+
+      <form id="text-form" class="text-form">
+        <input id="text-query" type="search" placeholder="…oppure scrivi qui" enterkeyhint="search">
+        <button type="submit">Cerca</button>
+      </form>
+    </section>
+
+    <ul id="results" class="results"></ul>
+  </main>
+
+  <!-- Schermata player -->
+  <section id="player" class="view hidden">
+    <header class="top">
+      <button id="btn-back" class="icon-btn" aria-label="Indietro">←</button>
+      <h2 id="player-title" class="player-title"></h2>
+    </header>
+    <div class="frame-wrap">
+      <iframe id="yt-frame" title="Video YouTube"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen></iframe>
+    </div>
+    <a id="open-yt" class="open-yt" target="_blank" rel="noopener">Apri nell'app YouTube</a>
+  </section>
+
+  <!-- Schermata impostazioni: chiave API -->
+  <section id="settings" class="view hidden">
+    <header class="top">
+      <button id="btn-settings-back" class="icon-btn" aria-label="Indietro">←</button>
+      <h2>Impostazioni</h2>
+    </header>
+    <div class="settings-body">
+      <label for="api-key">Chiave API di YouTube</label>
+      <input id="api-key" type="text" autocomplete="off" spellcheck="false" placeholder="AIza...">
+      <button id="btn-save-key">Salva</button>
+      <p class="hint">La chiave resta salvata solo su questo telefono.</p>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
