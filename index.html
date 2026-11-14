@@ -38,6 +38,7 @@
           <input id="text-query" type="search" placeholder="…oppure scrivi qui" enterkeyhint="search">
           <button type="submit">Cerca</button>
         </form>
+        <p class="quota"></p>
       </section>
 
       <ul id="results" class="results"></ul>
@@ -68,6 +69,7 @@
 
         <button id="btn-novita" class="primary">Cerca novità nei miei canali</button>
         <p id="status-novita" class="status">Cerca le parole chiave nei video recenti di tutti i tuoi canali. Ti verrà chiesto di accedere con il tuo account Google.</p>
+        <p class="quota"></p>
       </section>
 
       <ul id="results-novita" class="results"></ul>
@@ -116,9 +118,14 @@
             <option value="3">Ultimi 3 giorni</option>
           </select>
         </div>
+        <label class="check-row">
+          <input id="feed-mese" type="checkbox">
+          Questa lista: ultimo mese
+        </label>
 
         <button id="btn-feed" class="primary">Aggiorna il feed</button>
         <p id="status-feed" class="status">Scegli i canali da seguire: vedrai tutti i loro video recenti.</p>
+        <p class="quota"></p>
       </section>
 
       <ul id="results-feed" class="results"></ul>
@@ -136,7 +143,7 @@
       <button id="btn-back" class="icon-btn" aria-label="Indietro">←</button>
       <h2 id="player-title" class="player-title"></h2>
     </header>
-    <div class="frame-wrap">
+    <div id="frame-wrap" class="frame-wrap">
       <iframe id="yt-frame" title="Video YouTube"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen></iframe>

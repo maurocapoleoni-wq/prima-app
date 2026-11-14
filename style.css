@@ -114,7 +114,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.frame-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+.frame-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 0 auto; background: #000; }
 .frame-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .open-yt { display: block; text-align: center; padding: 16px; color: var(--muted); }
 
@@ -124,7 +124,10 @@ body {
   #player .frame-wrap {
     position: fixed;
     inset: 0;
-    aspect-ratio: auto;
+    /* !important: vince sulle proporzioni impostate dall'app per la visione in verticale */
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
     z-index: 10;
   }
 }
@@ -176,6 +179,13 @@ body {
 .chip.attiva { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
 .chip.nuova { border-style: dashed; color: var(--muted); }
 .link-btn:disabled { opacity: 0.35; }
+.check-row { display: flex; align-items: center; gap: 10px; color: var(--text); }
+.check-row input { width: 20px; height: 20px; accent-color: var(--red); }
+.nov-row select:disabled { opacity: 0.4; }
+
+/* Contatore della quota YouTube */
+.quota { margin: 4px 0 0; color: var(--muted); font-size: 0.75rem; text-align: center; }
+.quota.quota-alta { color: #ffb020; font-weight: 600; }
 .nov-row { display: flex; align-items: center; gap: 12px; color: var(--muted); }
 .nov-row select {
   flex: 1;

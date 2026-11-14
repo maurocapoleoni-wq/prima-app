@@ -97,10 +97,11 @@ $('btn-esci').addEventListener('click', () => {
 async function yt(percorso, params, token) {
   const url = new URL('https://www.googleapis.com/youtube/v3/' + percorso);
   url.search = new URLSearchParams(params);
+  contaQuota(1); // subscriptions e playlistItems costano 1 unità
   const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
   const data = await r.json();
   if (!r.ok) {
-    const e = new Error(data.error?.message || r.status);
+    const e = new Error(erroreYouTube(data, r.status));
     e.status = r.status;
     throw e;
   }
@@ -121,10 +122,11 @@ async function iscrizioni(token) {
 }
 
 // Ultimi video di un canale: la sua playlist "caricamenti" ha l'ID del canale con UU al posto di UC
-async function ultimiVideo(canale, token) {
+// (su periodi lunghi chiede più video: il costo resta 1 unità)
+async function ultimiVideo(canale, token, giorni) {
   try {
     const d = await yt('playlistItems', {
-      part: 'snippet,contentDetails', playlistId: 'UU' + canale.id.slice(2), maxResults: '15',
+      part: 'snippet,contentDetails', playlistId: 'UU' + canale.id.slice(2), maxResults: giorni > 7 ? '50' : '15',
     }, token);
     return d.items || [];
   } catch (err) {
@@ -139,7 +141,7 @@ async function raccogliVideo(canali, giorni, regole, token, status) {
   const trovati = [];
   for (let i = 0; i < canali.length; i += CANALI_IN_PARALLELO) {
     const gruppo = canali.slice(i, i + CANALI_IN_PARALLELO);
-    const risposte = await Promise.all(gruppo.map((c) => ultimiVideo(c, token)));
+    const risposte = await Promise.all(gruppo.map((c) => ultimiVideo(c, token, giorni)));
     risposte.forEach((items, j) => {
       for (const it of items) {
         const s = it.snippet;
@@ -265,6 +267,7 @@ $('nov-form').addEventListener('submit', (e) => {
 
 // ======================= FEED (fino a 8 liste di canali scelti) =======================
 const MAX_LISTE = 8;
+const GIORNI_MESE = 30;
 const statusFeed = (t) => { $('status-feed').textContent = t; };
 const elencoFeed = creaElenco('results-feed', 'pager-feed');
 collegaPeriodo('feed-giorni', K.feedGiorni, 3);
@@ -315,6 +318,9 @@ function mostraListe() {
     box.append(b);
   }
   $('btn-feed-elimina').disabled = liste.length === 1;
+  // "Ultimo mese" vale solo per la lista selezionata
+  $('feed-mese').checked = !!attiva.mese;
+  $('feed-giorni').disabled = !!attiva.mese;
   const n = attiva.canali.length;
   $('feed-canali-info').textContent = n
     ? `${n} ${n === 1 ? 'canale scelto' : 'canali scelti'}`
@@ -341,6 +347,14 @@ function nuovaLista() {
   statusFeed(`Lista "${l.nome}" creata: tocca Scegli per aggiungere i canali.`);
 }
 
+$('feed-mese').addEventListener('change', () => {
+  const attiva = listaAttiva();
+  modificaLista(attiva.id, (l) => { l.mese = $('feed-mese').checked; });
+  delete risultatiFeed[attiva.id];
+  mostraListe();
+  statusFeed(`Lista "${attiva.nome}": ${$('feed-mese').checked ? "guardo l'ultimo mese" : 'uso il periodo scelto sopra'}. Tocca "Aggiorna il feed".`);
+});
+
 $('btn-feed-rinomina').addEventListener('click', () => {
   const attiva = listaAttiva();
   const nome = (prompt('Nuovo nome della lista:', attiva.nome) || '').trim();
@@ -366,7 +380,7 @@ async function aggiornaFeed() {
   const token = tokenValido();
   if (!token) { accedi('feed', statusFeed); return; }
 
-  const giorni = Number($('feed-giorni').value);
+  const giorni = lista.mese ? GIORNI_MESE : Number($('feed-giorni').value);
   const btn = $('btn-feed');
   btn.disabled = true;
   try {

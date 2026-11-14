@@ -61,6 +61,49 @@ $('text-form').addEventListener('submit', (e) => {
   if (q) cerca(q);
 });
 
+// ---------- Conteggio della quota YouTube (solo le richieste di questo telefono) ----------
+// YouTube dà 10.000 unità al giorno: una ricerca costa 100, le altre richieste 1.
+// La quota si azzera a mezzanotte ora del Pacifico (le 9 del mattino in Italia).
+const QUOTA_GIORNO = 10000;
+const COSTO_RICERCA = 100;
+const giornoPacifico = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+
+function leggiQuota() {
+  const oggi = { giorno: giornoPacifico(), unita: 0 };
+  try {
+    const q = JSON.parse(localStorage.getItem('quota_youtube') || 'null');
+    return q && q.giorno === oggi.giorno ? q : oggi;
+  } catch { return oggi; }
+}
+
+function contaQuota(unita) {
+  const q = leggiQuota();
+  q.unita += unita;
+  try { localStorage.setItem('quota_youtube', JSON.stringify(q)); } catch {}
+  aggiornaQuota();
+}
+
+function aggiornaQuota() {
+  const u = leggiQuota().unita;
+  const fmt = (n) => n.toLocaleString('it-IT');
+  const ricerche = Math.round(u / COSTO_RICERCA);
+  const testoQuota = `YouTube oggi, da questo telefono: ${fmt(u)} unità su ${fmt(QUOTA_GIORNO)} `
+    + `(come ${fmt(ricerche)} ${ricerche === 1 ? 'ricerca' : 'ricerche'} su ${fmt(QUOTA_GIORNO / COSTO_RICERCA)})`;
+  document.querySelectorAll('.quota').forEach((el) => {
+    el.textContent = testoQuota;
+    el.classList.toggle('quota-alta', u >= QUOTA_GIORNO * 0.8);
+  });
+}
+
+// Messaggio d'errore di YouTube, con un testo chiaro quando la quota del giorno è finita
+function erroreYouTube(data, status) {
+  const motivo = data?.error?.errors?.[0]?.reason;
+  if (motivo === 'quotaExceeded' || motivo === 'dailyLimitExceeded') {
+    return 'Limite giornaliero di YouTube raggiunto: riprova dopo le 9 del mattino.';
+  }
+  return data?.error?.message || String(status);
+}
+
 // ---------- Elenco di video (usato da Cerca e da Novità) ----------
 // L'API restituisce entità HTML (es. &#39;): le decodifico senza eseguire HTML
 function testo(s) {
@@ -135,9 +178,10 @@ async function caricaPaginaRicerca(i) {
   });
 
   try {
+    contaQuota(COSTO_RICERCA);
     const r = await fetch(url);
     const data = await r.json();
-    if (!r.ok) throw new Error(data.error?.message || r.status);
+    if (!r.ok) throw new Error(erroreYouTube(data, r.status));
     ricerca.pagine[i] = (data.items || []).map((it) => ({
       id: it.id.videoId,
       title: testo(it.snippet.title),
@@ -182,8 +226,31 @@ function apriVideo(id, titolo) {
   $('player-title').textContent = titolo;
   $('yt-frame').src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0';
   $('open-yt').href = 'https://www.youtube.com/watch?v=' + id;
+  impostaFormato(16, 9);
   show('player');
   history.pushState({ v: 'player' }, '');
+  formatoVideo(id);
+}
+
+// Riquadro del player con le proporzioni del video: largo quanto lo schermo,
+// ma mai più alto dello spazio disponibile (così i video verticali si vedono grandi)
+function impostaFormato(w, h) {
+  const box = $('frame-wrap');
+  box.style.aspectRatio = `${w} / ${h}`;
+  box.style.width = `min(100%, calc((100dvh - 140px) * ${w / h}))`;
+}
+
+// Chiede a YouTube le proporzioni del video (1 unità di quota)
+async function formatoVideo(id) {
+  try {
+    const url = new URL('https://www.googleapis.com/youtube/v3/videos');
+    url.search = new URLSearchParams({ part: 'player', id, maxHeight: '1280', key: getKey() });
+    contaQuota(1);
+    const d = await (await fetch(url)).json();
+    const p = d.items?.[0]?.player;
+    const ancoraAperto = $('yt-frame').src.includes(id);
+    if (ancoraAperto && p?.embedWidth && p?.embedHeight) impostaFormato(Number(p.embedWidth), Number(p.embedHeight));
+  } catch { /* resta 16:9 */ }
 }
 
 function chiudiVideo() {
@@ -212,6 +279,7 @@ $('btn-save-key').addEventListener('click', () => {
 });
 
 if (!getKey()) setStatus('Prima volta? Inserisci la chiave API nelle impostazioni ⚙️');
+aggiornaQuota();
 
 // ---------- Installabilità (PWA) ----------
 if ('serviceWorker' in navigator) {
