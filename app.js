@@ -243,8 +243,10 @@ function apriVideo(id, titolo, video) {
   document.dispatchEvent(new CustomEvent('videoaperto'));
   $('player-title').textContent = titolo;
   // enablejsapi=1: permette all'app di mettere in pausa il video (vedi "Guarda sulla TV")
+  // hl=it: player in italiano (può far scegliere la traccia audio italiana, se il video ce l'ha)
+  // cc_lang_pref=it: sottotitoli in italiano quando li attivi
   $('yt-frame').src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0&enablejsapi=1'
-    + '&origin=' + encodeURIComponent(location.origin);
+    + '&hl=it&cc_lang_pref=it&origin=' + encodeURIComponent(location.origin);
   $('open-yt').href = linkAppYouTube(id);
   // il link "intent" va aperto nella stessa finestra, altrimenti resterebbe una scheda vuota
   $('open-yt').target = /Android/i.test(navigator.userAgent) ? '_self' : '_blank';
