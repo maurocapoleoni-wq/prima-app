@@ -106,7 +106,11 @@ async function sp(percorso, params) {
   if (r.status === 401) { scrivi(SP.token, null); throw new ServeAccesso(); }
   const d = await r.json().catch(() => ({}));
   if (r.status === 403) {
-    throw new Error("il tuo account Spotify non è tra gli utenti autorizzati: aggiungilo in User Management su developer.spotify.com");
+    // Mostro le parole esatte di Spotify: il rifiuto può avere motivi diversi
+    // (utente non in User Management, abbonamento richiesto, funzione non disponibile…)
+    const motivo = d.error?.message || 'accesso negato';
+    throw new Error(`Spotify rifiuta la richiesta (403): "${motivo}". Se è un problema di utenti, `
+      + "controlla User Management su developer.spotify.com");
   }
   if (r.status === 429) throw new Error('troppe richieste a Spotify, riprova tra poco');
   if (!r.ok) throw new Error(d.error?.message || r.status);

@@ -1,5 +1,5 @@
 // Service worker minimo: mette in cache i file dell'app così si apre subito.
-const CACHE = 'cerca-v23';
+const CACHE = 'cerca-v24';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'novita.js', 'salvati.js', 'spotify.js', 'manifest.json','icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
