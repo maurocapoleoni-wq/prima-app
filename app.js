@@ -242,8 +242,12 @@ function apriVideo(id, titolo, video) {
   videoCorrente = video || { id, title: titolo };
   document.dispatchEvent(new CustomEvent('videoaperto'));
   $('player-title').textContent = titolo;
-  $('yt-frame').src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0';
-  $('open-yt').href = 'https://www.youtube.com/watch?v=' + id;
+  // enablejsapi=1: permette all'app di mettere in pausa il video (vedi "Guarda sulla TV")
+  $('yt-frame').src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0&enablejsapi=1'
+    + '&origin=' + encodeURIComponent(location.origin);
+  $('open-yt').href = linkAppYouTube(id);
+  // il link "intent" va aperto nella stessa finestra, altrimenti resterebbe una scheda vuota
+  $('open-yt').target = /Android/i.test(navigator.userAgent) ? '_self' : '_blank';
   impostaFormato(16, 9);
   show('player');
   history.pushState({ v: 'player' }, '');
@@ -270,6 +274,22 @@ async function formatoVideo(id) {
     if (ancoraAperto && p?.embedWidth && p?.embedHeight) impostaFormato(Number(p.embedWidth), Number(p.embedHeight));
   } catch { /* resta 16:9 */ }
 }
+
+// ---------- Guarda sulla TV ----------
+// Apre il video nell'app YouTube, dove c'è il tasto ufficiale per trasmettere alla TV.
+// Su Android un link "intent" apre sempre l'app (e il sito solo se l'app non c'è).
+function linkAppYouTube(id) {
+  const web = 'https://www.youtube.com/watch?v=' + id;
+  if (!/Android/i.test(navigator.userAgent)) return web;
+  return 'intent://www.youtube.com/watch?v=' + id
+    + '#Intent;package=com.google.android.youtube;scheme=https;'
+    + 'S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+}
+
+$('open-yt').addEventListener('click', () => {
+  // Pausa il video nell'app, così non continua a suonare mentre guardi sulla TV
+  $('yt-frame').contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+});
 
 function chiudiVideo() {
   $('yt-frame').src = 'about:blank';

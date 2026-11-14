@@ -136,11 +136,26 @@ body {
 }
 .frame-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 0 auto; background: #000; }
 .frame-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.open-yt { display: block; text-align: center; padding: 16px; color: var(--muted); }
+/* Guarda sulla TV */
+.tv-area { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px; }
+.tv-btn {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  padding: 12px 16px;
+  border-radius: 24px;
+  background: #333;
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.tv-area .hint { margin: 0; text-align: center; }
 
 /* Telefono girato in orizzontale: il video occupa tutto lo schermo */
 @media (orientation: landscape) and (max-height: 600px) {
-  #player .top, #player .open-yt, #player .salva-scelta { display: none; }
+  #player .top, #player .tv-area, #player .salva-scelta { display: none; }
   #player .frame-wrap {
     position: fixed;
     inset: 0;
