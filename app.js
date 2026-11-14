@@ -179,8 +179,41 @@ function aggiornaPager(el, etichetta, puoiPrima, puoiDopo, visibile) {
 // token[i] = come chiedere la pagina i (la prima non ne ha bisogno); undefined = non ci sono altre pagine
 const ricerca = { query: '', fonte: 'youtube', pagine: [], token: [], idx: 0 };
 
+// ---------- Ricerche recenti (le ultime 6, un tocco per rifarle) ----------
+const MAX_RECENTI = 6;
+function leggiRecenti() {
+  try { return JSON.parse(localStorage.getItem('ricerche_recenti') || '[]'); } catch { return []; }
+}
+
+function aggiungiRecente(q, fonte) {
+  const lista = [{ q, fonte }, ...leggiRecenti().filter((r) => !(r.fonte === fonte && r.q.toLowerCase() === q.toLowerCase()))];
+  try { localStorage.setItem('ricerche_recenti', JSON.stringify(lista.slice(0, MAX_RECENTI))); } catch {}
+  mostraRecenti();
+}
+
+function mostraRecenti() {
+  const lista = leggiRecenti();
+  $('recenti').classList.toggle('hidden', lista.length === 0);
+  const box = $('recenti-lista');
+  box.innerHTML = '';
+  for (const r of lista) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip ' + (r.fonte === 'podcast' ? 'rec-pod' : 'rec-yt');
+    b.textContent = (r.fonte === 'podcast' ? '🎧 ' : '▶ ') + r.q;
+    b.addEventListener('click', () => { $('text-query').value = r.q; cerca(r.q, r.fonte); });
+    box.append(b);
+  }
+}
+
+$('btn-recenti-cancella').addEventListener('click', () => {
+  try { localStorage.removeItem('ricerche_recenti'); } catch {}
+  mostraRecenti();
+});
+
 async function cerca(query, fonte = 'youtube') {
   if (fonte === 'youtube' && !getKey()) { show('settings'); return; }
+  aggiungiRecente(query, fonte);
   Object.assign(ricerca, { query, fonte, pagine: [], token: [undefined], idx: 0, tuttiPodcast: null });
   $('results').innerHTML = '';
   $('pager-cerca').classList.add('hidden');
@@ -533,6 +566,7 @@ $('btn-save-key').addEventListener('click', () => {
 
 if (!getKey()) setStatus('Prima volta? Inserisci la chiave API nelle impostazioni ⚙️');
 aggiornaQuota();
+mostraRecenti();
 // Dopo che tutti gli script sono pronti (anche "Mi piace"), apri l'eventuale video di un link condiviso
 document.addEventListener('DOMContentLoaded', apriVideoDaLink);
 
