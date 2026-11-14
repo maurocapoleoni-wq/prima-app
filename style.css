@@ -118,6 +118,17 @@ body {
 .frame-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .open-yt { display: block; text-align: center; padding: 16px; color: var(--muted); }
 
+/* Telefono girato in orizzontale: il video occupa tutto lo schermo */
+@media (orientation: landscape) and (max-height: 600px) {
+  #player .top, #player .open-yt { display: none; }
+  #player .frame-wrap {
+    position: fixed;
+    inset: 0;
+    aspect-ratio: auto;
+    z-index: 10;
+  }
+}
+
 .settings-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .settings-body input {
   padding: 10px 12px;
