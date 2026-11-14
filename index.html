@@ -178,7 +178,16 @@
     <div class="tv-area">
       <a id="open-yt" class="tv-btn" target="_blank" rel="noopener">📺 Guarda sulla TV</a>
       <p class="hint">Si apre YouTube: tocca l'icona di trasmissione in alto.</p>
-      <button id="btn-ricomincia" type="button" class="small-btn ricomincia">⟲ Ricomincia da capo</button>
+      <!-- Segmento: inizio e fine segnati, usati quando il video si apre da "Mi piace" -->
+      <div class="segmento">
+        <div class="segmento-pulsanti">
+          <button id="btn-seg-inizio" type="button" class="small-btn">⏵ Segna inizio</button>
+          <button id="btn-seg-fine" type="button" class="small-btn">⏹ Segna fine</button>
+          <button id="btn-seg-azzera" type="button" class="small-btn" aria-label="Cancella il segmento">✕</button>
+        </div>
+        <p id="segmento-info" class="hint"></p>
+        <p class="hint">Dalla scheda Mi piace il video partirà dall'inizio segnato e si fermerà alla fine.</p>
+      </div>
     </div>
   </section>
 

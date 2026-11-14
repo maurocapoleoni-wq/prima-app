@@ -49,7 +49,14 @@ function mostraSalvati() {
   const totale = Math.ceil(video.length / NUM_RISULTATI);
   paginaSalvati = Math.min(paginaSalvati, Math.max(0, totale - 1)); // dopo una rimozione
   const da = paginaSalvati * NUM_RISULTATI;
-  mostraVideo($('results-salvati'), video.slice(da, da + NUM_RISULTATI), {
+  // da qui il video si apre con il suo segmento (inizio/fine segnati nel player)
+  const segmenti = leggiSegmenti();
+  const pagina = video.slice(da, da + NUM_RISULTATI).map((v) => ({
+    ...v,
+    usaSegmento: true,
+    nota: segmenti[v.id] ? '⏱ ' + testoSegmento(segmenti[v.id]) : '',
+  }));
+  mostraVideo($('results-salvati'), pagina, {
     onRimuovi: (v) => {
       if (confirm(`Togliere "${v.title}" da questa lista?`)) rimuoviSalvato(listaSalvatiAttiva, v.id);
     },

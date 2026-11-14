@@ -114,7 +114,7 @@ function formatData(iso) {
   return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 }
 
-// items: [{ id, title, channel, thumb, date?, isNew? }]
+// items: [{ id, title, channel, thumb, date?, isNew?, nota? }] (nota: testo in più sotto il titolo)
 // opzioni.onRimuovi(video): se presente, ogni video ha una ✕ per toglierlo dall'elenco
 function mostraVideo(ul, items, opzioni = {}) {
   ul.innerHTML = '';
@@ -136,7 +136,7 @@ function mostraVideo(ul, items, opzioni = {}) {
     t.textContent = v.title;
     const c = document.createElement('p');
     c.className = 'channel';
-    c.textContent = v.channel + (v.date ? ' · ' + formatData(v.date) : '');
+    c.textContent = v.channel + (v.date ? ' · ' + formatData(v.date) : '') + (v.nota ? ' · ' + v.nota : '');
     meta.append(t, c);
     li.append(img, meta);
     if (opzioni.onRimuovi) {
@@ -237,12 +237,18 @@ $('pager-cerca').querySelector('.prev').addEventListener('click', () => {
 // ---------- Player ----------
 // Video in riproduzione: { id, title, channel?, thumb?, date? } (usato da "Mi piace")
 let videoCorrente = null;
-// enablejsapi=1: l'app può dare comandi al player (pausa, ricomincia)
+let tempoVideo = 0; // secondo attuale del video, comunicato dal player
+
+// enablejsapi=1: l'app può parlare con il player (pausa, secondo attuale)
 // hl=it / cc_lang_pref=it: menu e sottotitoli del player in italiano
 // (YouTube non permette di scegliere la traccia audio nel player incorporato)
-function urlPlayer(id) {
+// seg: { inizio?, fine? } in secondi → il video parte e si ferma lì (parametri ufficiali start/end)
+function urlPlayer(id, seg) {
   return 'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0&enablejsapi=1'
-    + '&hl=it&cc_lang_pref=it&origin=' + encodeURIComponent(location.origin);
+    + '&hl=it&cc_lang_pref=it'
+    + (seg?.inizio > 0 ? '&start=' + seg.inizio : '')
+    + (seg?.fine > 0 ? '&end=' + seg.fine : '')
+    + '&origin=' + encodeURIComponent(location.origin);
 }
 
 // Comando ufficiale al player di YouTube, es. comandoPlayer('pauseVideo')
@@ -250,16 +256,84 @@ function comandoPlayer(func, args = []) {
   $('yt-frame').contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
 }
 
-$('btn-ricomincia').addEventListener('click', () => {
-  comandoPlayer('seekTo', [0, true]);
-  comandoPlayer('playVideo');
+// Il player, se glielo chiedi, comunica il secondo attuale con dei messaggi
+$('yt-frame').addEventListener('load', () => {
+  $('yt-frame').contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*');
+});
+window.addEventListener('message', (e) => {
+  try {
+    if (!/(^|\.)youtube\.com$/.test(new URL(e.origin).hostname)) return;
+    const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+    if (typeof d?.info?.currentTime === 'number') tempoVideo = d.info.currentTime;
+  } catch { /* messaggio non nostro */ }
 });
 
+// ---------- Segmento: inizio e fine segnati, usati quando apri il video da "Mi piace" ----------
+// Salvati per video: { idVideo: { inizio?, fine? } } in secondi
+function leggiSegmenti() {
+  try { return JSON.parse(localStorage.getItem('segmenti_video') || '{}'); } catch { return {}; }
+}
+
+function scriviSegmento(id, seg) {
+  const s = leggiSegmenti();
+  if (seg && (seg.inizio != null || seg.fine != null)) s[id] = seg;
+  else delete s[id];
+  try { localStorage.setItem('segmenti_video', JSON.stringify(s)); } catch {}
+}
+
+// 75 → "1:15", 3725 → "1:02:05"
+function formatTempo(sec) {
+  sec = Math.floor(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+}
+
+function testoSegmento(seg) {
+  return `${formatTempo(seg.inizio || 0)} → ${seg.fine != null ? formatTempo(seg.fine) : 'fine'}`;
+}
+
+function aggiornaSegmento(messaggio) {
+  const seg = videoCorrente && leggiSegmenti()[videoCorrente.id];
+  $('segmento-info').textContent = messaggio || (seg ? 'Segmento: ' + testoSegmento(seg) : 'Nessun segmento segnato');
+  $('btn-seg-azzera').disabled = !seg;
+}
+
+$('btn-seg-inizio').addEventListener('click', () => {
+  if (!videoCorrente) return;
+  const seg = { ...leggiSegmenti()[videoCorrente.id], inizio: Math.floor(tempoVideo) };
+  if (seg.fine != null && seg.fine <= seg.inizio) delete seg.fine; // la vecchia fine ora sarebbe prima
+  scriviSegmento(videoCorrente.id, seg);
+  aggiornaSegmento();
+});
+
+$('btn-seg-fine').addEventListener('click', () => {
+  if (!videoCorrente) return;
+  const fine = Math.ceil(tempoVideo);
+  const seg = { ...leggiSegmenti()[videoCorrente.id] };
+  if (seg.inizio != null && fine <= seg.inizio) {
+    aggiornaSegmento(`La fine deve venire dopo l'inizio (${formatTempo(seg.inizio)}).`);
+    return;
+  }
+  seg.fine = fine;
+  scriviSegmento(videoCorrente.id, seg);
+  aggiornaSegmento();
+});
+
+$('btn-seg-azzera').addEventListener('click', () => {
+  if (!videoCorrente) return;
+  scriviSegmento(videoCorrente.id, null);
+  aggiornaSegmento();
+});
+
+// video.usaSegmento = true quando il video è aperto dalla scheda "Mi piace"
 function apriVideo(id, titolo, video) {
   videoCorrente = video || { id, title: titolo };
   document.dispatchEvent(new CustomEvent('videoaperto'));
   $('player-title').textContent = titolo;
-  $('yt-frame').src = urlPlayer(id);
+  const seg = video?.usaSegmento ? leggiSegmenti()[id] : null;
+  tempoVideo = seg?.inizio || 0;
+  $('yt-frame').src = urlPlayer(id, seg);
+  aggiornaSegmento(seg ? 'Riproduco il segmento: ' + testoSegmento(seg) : '');
   $('open-yt').href = linkAppYouTube(id);
   // il link "intent" va aperto nella stessa finestra, altrimenti resterebbe una scheda vuota
   $('open-yt').target = /Android/i.test(navigator.userAgent) ? '_self' : '_blank';

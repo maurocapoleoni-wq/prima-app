@@ -153,7 +153,11 @@ body {
 }
 .tv-area .hint { margin: 0; text-align: center; }
 
-.ricomincia { margin-top: 12px; padding: 10px 20px; font-size: 0.95rem; }
+/* Segmento: segna inizio / segna fine */
+.segmento { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 16px; width: 100%; }
+.segmento-pulsanti { display: flex; gap: 8px; }
+.segmento .hint { margin: 0; text-align: center; }
+#segmento-info { color: var(--text); font-weight: 600; }
 
 /* Telefono girato in orizzontale: il video occupa tutto lo schermo */
 @media (orientation: landscape) and (max-height: 600px) {
