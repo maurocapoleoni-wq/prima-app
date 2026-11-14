@@ -104,7 +104,10 @@ async function sp(percorso, params) {
   url.search = new URLSearchParams(params);
   const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
   if (r.status === 401) { scrivi(SP.token, null); throw new ServeAccesso(); }
-  const d = await r.json().catch(() => ({}));
+  // Spotify di solito risponde in JSON, ma per alcuni rifiuti manda solo testo semplice
+  const testoRisposta = await r.text();
+  let d = {};
+  try { d = JSON.parse(testoRisposta); } catch { d = { error: { message: testoRisposta.trim().slice(0, 200) } }; }
   if (r.status === 403) {
     // Mostro le parole esatte di Spotify: il rifiuto può avere motivi diversi
     // (utente non in User Management, abbonamento richiesto, funzione non disponibile…)
