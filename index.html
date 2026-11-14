@@ -81,10 +81,17 @@
     <!-- Scheda Feed: tutti i video recenti dei canali scelti -->
     <div id="tab-feed" class="hidden">
       <section class="novita-area">
+        <!-- Fino a 4 liste di canali, una per argomento -->
+        <div id="feed-liste" class="chips" aria-label="Liste del feed"></div>
+
         <div class="nov-row">
           <span>Canali</span>
           <span id="feed-canali-info" class="nov-info">Nessun canale scelto</span>
           <button id="btn-feed-scegli" type="button" class="small-btn">Scegli</button>
+        </div>
+        <div class="scelta-azioni">
+          <button id="btn-feed-rinomina" type="button" class="link-btn">Rinomina lista</button>
+          <button id="btn-feed-elimina" type="button" class="link-btn">Elimina lista</button>
         </div>
 
         <!-- Elenco dei canali da spuntare (si apre con "Scegli") -->
@@ -104,9 +111,9 @@
         <div class="nov-row">
           <label for="feed-giorni">Periodo</label>
           <select id="feed-giorni">
-            <option value="7">Ultimi 7 giorni</option>
-            <option value="14">Ultimi 14 giorni</option>
-            <option value="30">Ultimi 30 giorni</option>
+            <option value="1">Ultimo giorno</option>
+            <option value="2">Ultimi 2 giorni</option>
+            <option value="3">Ultimi 3 giorni</option>
           </select>
         </div>
 

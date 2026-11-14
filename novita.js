@@ -13,7 +13,9 @@ const K = {
   token: 'nov_token', tab: 'tab', state: 'oauth_state',
   dopo: 'dopo_accesso', // cosa fare al ritorno da Google: 'novita' | 'feed' | 'feed-canali'
   novParole: 'nov_parole', novGiorni: 'nov_giorni', novVisti: 'nov_visti',
-  feedCanali: 'feed_canali', feedGiorni: 'feed_giorni', feedVisti: 'feed_visti', // feedCanali: [{id, nome}]
+  feedGiorni: 'feed_giorni', feedVisti: 'feed_visti',
+  feedListe: 'feed_liste', feedAttiva: 'feed_lista_attiva', // feedListe: [{id, nome, canali: [{id, nome}]}]
+  feedCanali: 'feed_canali', // vecchia lista unica: letta solo per creare la "Lista 1"
 };
 
 function leggi(k, def) {
@@ -171,7 +173,7 @@ function segnaNuovi(video, chiaveVisti) {
 }
 
 const riepilogo = (n, giorni, nuovi) =>
-  `${n} video negli ultimi ${giorni} giorni, di cui ${nuovi} ${nuovi === 1 ? 'nuovo' : 'nuovi'}`;
+  `${n} video ${periodo(giorni)}, di cui ${nuovi} ${nuovi === 1 ? 'nuovo' : 'nuovi'}`;
 
 // Elenco a pagine di 4 già tutto in memoria
 function creaElenco(ulId, pagerId) {
@@ -188,15 +190,20 @@ function creaElenco(ulId, pagerId) {
   return { imposta(items) { Object.assign(st, { items, idx: 0 }); mostra(); } };
 }
 
-function collegaPeriodo(selectId, chiave) {
-  $(selectId).value = String(leggi(chiave, 14));
-  $(selectId).addEventListener('change', () => scrivi(chiave, Number($(selectId).value)));
+function collegaPeriodo(selectId, chiave, predefinito) {
+  const sel = $(selectId);
+  sel.value = String(leggi(chiave, predefinito));
+  if (!sel.value) sel.value = String(predefinito); // valore salvato non più tra le scelte
+  sel.addEventListener('change', () => scrivi(chiave, Number(sel.value)));
 }
+
+// "negli ultimi 3 giorni" / "nell'ultimo giorno"
+const periodo = (giorni) => (giorni === 1 ? "nell'ultimo giorno" : `negli ultimi ${giorni} giorni`);
 
 // ======================= NOVITÀ (parole chiave) =======================
 const statusNov = (t) => { $('status-novita').textContent = t; };
 const elencoNovita = creaElenco('results-novita', 'pager-novita');
-collegaPeriodo('nov-giorni', K.novGiorni);
+collegaPeriodo('nov-giorni', K.novGiorni, 14);
 
 async function cercaNovita() {
   const parole = leggi(K.novParole, []);
@@ -217,7 +224,7 @@ async function cercaNovita() {
     elencoNovita.imposta(video);
     statusNov(video.length
       ? riepilogo(video.length, giorni, nuovi)
-      : `Nessun video con queste parole negli ultimi ${giorni} giorni.`);
+      : `Nessun video con queste parole ${periodo(giorni)}.`);
   } catch (err) {
     if (err.status === 401) { scrivi(K.token, null); accedi('novita', statusNov); return; }
     statusNov('Errore: ' + err.message);
@@ -256,21 +263,106 @@ $('nov-form').addEventListener('submit', (e) => {
   mostraParole();
 });
 
-// ======================= FEED (canali scelti) =======================
+// ======================= FEED (fino a 4 liste di canali scelti) =======================
+const MAX_LISTE = 4;
 const statusFeed = (t) => { $('status-feed').textContent = t; };
 const elencoFeed = creaElenco('results-feed', 'pager-feed');
-collegaPeriodo('feed-giorni', K.feedGiorni);
+collegaPeriodo('feed-giorni', K.feedGiorni, 3);
+const risultatiFeed = {}; // id lista → video caricati finché l'app resta aperta
 
-function aggiornaInfoFeed() {
-  const n = leggi(K.feedCanali, []).length;
+// Liste salvate: [{ id, nome, canali: [{id, nome}] }]
+function leggiListe() {
+  let liste = leggi(K.feedListe, null);
+  if (!Array.isArray(liste) || !liste.length) {
+    // prima volta: i canali scelti con la versione a lista unica diventano la "Lista 1"
+    liste = [{ id: crypto.randomUUID(), nome: 'Lista 1', canali: leggi(K.feedCanali, []) }];
+    scrivi(K.feedListe, liste);
+  }
+  return liste;
+}
+
+function listaAttiva() {
+  const liste = leggiListe();
+  return liste.find((l) => l.id === leggi(K.feedAttiva, null)) || liste[0];
+}
+
+function modificaLista(id, modifica) {
+  const liste = leggiListe();
+  const l = liste.find((x) => x.id === id);
+  if (l) { modifica(l); scrivi(K.feedListe, liste); }
+}
+
+function mostraListe() {
+  const liste = leggiListe();
+  const attiva = listaAttiva();
+  const box = $('feed-liste');
+  box.innerHTML = '';
+  for (const l of liste) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip' + (l.id === attiva.id ? ' attiva' : '');
+    b.setAttribute('aria-pressed', String(l.id === attiva.id));
+    b.textContent = l.nome;
+    b.addEventListener('click', () => selezionaLista(l.id));
+    box.append(b);
+  }
+  if (liste.length < MAX_LISTE) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip nuova';
+    b.textContent = '+ Nuova lista';
+    b.addEventListener('click', nuovaLista);
+    box.append(b);
+  }
+  $('btn-feed-elimina').disabled = liste.length === 1;
+  const n = attiva.canali.length;
   $('feed-canali-info').textContent = n
     ? `${n} ${n === 1 ? 'canale scelto' : 'canali scelti'}`
     : 'Nessun canale scelto';
 }
 
+function selezionaLista(id) {
+  scrivi(K.feedAttiva, id);
+  $('feed-scelta').classList.add('hidden');
+  mostraListe();
+  const giaCaricati = risultatiFeed[id];
+  elencoFeed.imposta(giaCaricati || []);
+  statusFeed(giaCaricati ? '' : 'Tocca "Aggiorna il feed" per vedere i video di questa lista.');
+}
+
+function nuovaLista() {
+  const liste = leggiListe();
+  if (liste.length >= MAX_LISTE) return;
+  const nome = (prompt('Nome della nuova lista (es. Cucina, Viaggi):', 'Lista ' + (liste.length + 1)) || '').trim();
+  if (!nome) return;
+  const l = { id: crypto.randomUUID(), nome: nome.slice(0, 30), canali: [] };
+  scrivi(K.feedListe, [...liste, l]);
+  selezionaLista(l.id);
+  statusFeed(`Lista "${l.nome}" creata: tocca Scegli per aggiungere i canali.`);
+}
+
+$('btn-feed-rinomina').addEventListener('click', () => {
+  const attiva = listaAttiva();
+  const nome = (prompt('Nuovo nome della lista:', attiva.nome) || '').trim();
+  if (!nome) return;
+  modificaLista(attiva.id, (l) => { l.nome = nome.slice(0, 30); });
+  mostraListe();
+});
+
+$('btn-feed-elimina').addEventListener('click', () => {
+  const liste = leggiListe();
+  if (liste.length === 1) return;
+  const attiva = listaAttiva();
+  if (!confirm(`Eliminare la lista "${attiva.nome}"? Le tue iscrizioni su YouTube non cambiano.`)) return;
+  scrivi(K.feedListe, liste.filter((l) => l.id !== attiva.id));
+  delete risultatiFeed[attiva.id];
+  selezionaLista(leggiListe()[0].id);
+  statusFeed(`Lista "${attiva.nome}" eliminata.`);
+});
+
 async function aggiornaFeed() {
-  const canali = leggi(K.feedCanali, []);
-  if (!canali.length) { statusFeed('Prima scegli i canali da seguire con il pulsante Scegli.'); return; }
+  const lista = listaAttiva();
+  if (!lista.canali.length) { statusFeed('Prima scegli i canali di questa lista con il pulsante Scegli.'); return; }
   const token = tokenValido();
   if (!token) { accedi('feed', statusFeed); return; }
 
@@ -278,12 +370,14 @@ async function aggiornaFeed() {
   const btn = $('btn-feed');
   btn.disabled = true;
   try {
-    const video = await raccogliVideo(canali, giorni, [], token, statusFeed);
+    const video = await raccogliVideo(lista.canali, giorni, [], token, statusFeed);
     const nuovi = segnaNuovi(video, K.feedVisti);
+    risultatiFeed[lista.id] = video;
+    if (listaAttiva().id !== lista.id) return; // nel frattempo hai cambiato lista
     elencoFeed.imposta(video);
     statusFeed(video.length
-      ? riepilogo(video.length, giorni, nuovi)
-      : `Nessun video nuovo negli ultimi ${giorni} giorni.`);
+      ? `${lista.nome}: ${riepilogo(video.length, giorni, nuovi)}`
+      : `${lista.nome}: nessun video ${periodo(giorni)}.`);
   } catch (err) {
     if (err.status === 401) { scrivi(K.token, null); accedi('feed', statusFeed); return; }
     statusFeed('Errore: ' + err.message);
@@ -314,7 +408,7 @@ async function apriSceltaFeed() {
     aggiornaAccount();
   }
 
-  const scelti = new Set(leggi(K.feedCanali, []).map((c) => c.id));
+  const scelti = new Set(listaAttiva().canali.map((c) => c.id));
   const ul = $('feed-lista-canali');
   ul.innerHTML = '';
   for (const c of canali) {
@@ -332,7 +426,7 @@ async function apriSceltaFeed() {
   }
   $('feed-filtro').value = '';
   $('feed-scelta').classList.remove('hidden');
-  statusFeed(`Hai ${canali.length} canali: spunta quelli da seguire e tocca Salva.`);
+  statusFeed(`Lista "${listaAttiva().nome}": spunta i canali da seguire e tocca Salva.`);
 }
 
 const caselleFeed = () => [...$('feed-lista-canali').querySelectorAll('input[type="checkbox"]')];
@@ -350,16 +444,18 @@ $('btn-feed-annulla').addEventListener('click', () => {
   statusFeed('');
 });
 $('btn-feed-salva').addEventListener('click', () => {
-  const lista = caselleFeed().filter((cb) => cb.checked).map((cb) => ({ id: cb.value, nome: cb.dataset.nome }));
-  scrivi(K.feedCanali, lista);
+  const canali = caselleFeed().filter((cb) => cb.checked).map((cb) => ({ id: cb.value, nome: cb.dataset.nome }));
+  const attiva = listaAttiva();
+  modificaLista(attiva.id, (l) => { l.canali = canali; });
+  delete risultatiFeed[attiva.id];
   $('feed-scelta').classList.add('hidden');
-  aggiornaInfoFeed();
-  statusFeed(lista.length ? 'Canali salvati. Tocca "Aggiorna il feed".' : 'Nessun canale scelto.');
+  mostraListe();
+  statusFeed(canali.length ? 'Canali salvati. Tocca "Aggiorna il feed".' : 'Nessun canale scelto.');
 });
 
 // ---------- Avvio ----------
 mostraParole();
-aggiornaInfoFeed();
+mostraListe();
 const ritorno = leggiRispostaGoogle();
 if (ritorno) {
   const scheda = ritorno.dopo === 'novita' ? 'novita' : 'feed';

@@ -173,6 +173,9 @@ body {
   color: var(--text);
   font-size: 0.9rem;
 }
+.chip.attiva { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+.chip.nuova { border-style: dashed; color: var(--muted); }
+.link-btn:disabled { opacity: 0.35; }
 .nov-row { display: flex; align-items: center; gap: 12px; color: var(--muted); }
 .nov-row select {
   flex: 1;
