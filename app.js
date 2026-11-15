@@ -564,6 +564,74 @@ $('btn-save-key').addEventListener('click', () => {
   setStatus(getKey() ? 'Chiave salvata. Tocca il microfono e parla' : 'Inserisci la chiave API nelle impostazioni ⚙️');
 });
 
+// ---------- Copia di sicurezza (Esporta / Importa) ----------
+// Solo i dati dell'utente: niente chiavi (YouTube, Claude), niente accesso Google, niente contatore del giorno.
+const DATI_BACKUP = [
+  'feed_liste', 'feed_lista_attiva', 'feed_canali', 'feed_giorni', 'feed_visti',
+  'nov_parole', 'nov_giorni', 'nov_visti',
+  'salvati_video', 'salvati_nomi', 'segmenti_video', 'ricerche_recenti', 'modello_claude',
+];
+const infoBackup = (t) => { $('backup-info').textContent = t; };
+
+function riepilogoBackup(dati) {
+  const json = (k, def) => { try { return JSON.parse(dati[k]) ?? def; } catch { return def; } };
+  const liste = json('feed_liste', []).length;
+  const video = Object.values(json('salvati_video', {})).reduce((n, l) => n + (l?.length || 0), 0);
+  return `${liste} ${liste === 1 ? 'lista' : 'liste'} del Feed, ${video} video in Mi piace`;
+}
+
+$('btn-esporta').addEventListener('click', async () => {
+  const dati = {};
+  for (const k of DATI_BACKUP) {
+    const v = localStorage.getItem(k);
+    if (v !== null) dati[k] = v;
+  }
+  const oggi = new Date().toISOString().slice(0, 10);
+  const testo = JSON.stringify({ app: 'cerca-e-guarda', versione: 1, creato: new Date().toISOString(), dati }, null, 1);
+  const nome = `cerca-e-guarda-backup-${oggi}.json`;
+  const file = new File([testo], nome, { type: 'application/json' });
+  // Sul telefono si apre "Condividi": Drive, WhatsApp, email… Altrimenti si scarica il file.
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'Copia di sicurezza Cerca e Guarda' });
+      infoBackup(`Copia creata (${riepilogoBackup(dati)}).`);
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return; // condivisione annullata
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file);
+  a.download = nome;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  infoBackup(`File "${nome}" scaricato (${riepilogoBackup(dati)}). Lo trovi nei Download.`);
+});
+
+$('btn-importa').addEventListener('click', () => $('file-importa').click());
+$('file-importa').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  e.target.value = ''; // così si può riscegliere lo stesso file
+  if (!file) return;
+  let copia;
+  try { copia = JSON.parse(await file.text()); } catch { copia = null; }
+  if (copia?.app !== 'cerca-e-guarda' || typeof copia.dati !== 'object' || !copia.dati) {
+    infoBackup('Questo file non è una copia di sicurezza di Cerca e Guarda.');
+    return;
+  }
+  const quando = copia.creato ? new Date(copia.creato).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  if (!confirm(`Ripristinare la copia${quando ? ' del ' + quando : ''} (${riepilogoBackup(copia.dati)})?
+
+`
+    + 'Le liste e i video salvati ora su questo telefono verranno sostituiti da quelli del file.')) return;
+  for (const k of DATI_BACKUP) {
+    const v = copia.dati[k];
+    try { typeof v === 'string' ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {}
+  }
+  alert("Dati ripristinati. L'app ora si ricarica.");
+  location.reload();
+});
+
 if (!getKey()) setStatus('Prima volta? Inserisci la chiave API nelle impostazioni ⚙️');
 aggiornaQuota();
 mostraRecenti();

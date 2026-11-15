@@ -108,7 +108,7 @@ body {
   color: var(--text);
   font-size: 1rem;
 }
-.text-form button, #btn-save-key, #btn-save-claude {
+.text-form button, #btn-save-key, #btn-save-claude, #btn-esporta, #btn-importa {
   padding: 10px 16px;
   border-radius: 20px;
   border: none;

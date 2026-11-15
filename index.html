@@ -272,6 +272,12 @@
         <option value="claude-haiku-5-5">Haiku 5.5 · economico (consigliato)</option>
         <option value="claude-opus-5-5">Opus 5.5 · più bravo, più caro</option>
       </select>
+      <!-- Copia di sicurezza: tutti i dati dell'app in un file, da ricaricare su un altro telefono o browser -->
+      <label class="claude-label">Copia di sicurezza</label>
+      <button id="btn-esporta" type="button">⬇ Esporta i miei dati</button>
+      <button id="btn-importa" type="button">⬆ Importa da un file</button>
+      <input id="file-importa" type="file" accept=".json,application/json" hidden>
+      <p id="backup-info" class="hint">Salva in un file liste del Feed, Mi piace, segmenti e parole chiave. Le chiavi di YouTube e di Claude e l'accesso Google non vengono copiati.</p>
       <button id="btn-esci" class="link-btn hidden">Esci dall'account Google</button>    </div>
   </section>
 
