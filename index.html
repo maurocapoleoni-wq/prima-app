@@ -16,8 +16,8 @@
     <header class="top">
       <!-- logo: i due "occhi" in piccolo -->
       <svg class="logo" viewBox="20 15 220 100" aria-hidden="true">
-        <path d="M130 65 C 105 20, 30 20, 30 65 C 30 110, 105 110, 130 65 Z" fill="#ff0033"/>
-        <path d="M130 65 C 155 20, 230 20, 230 65 C 230 110, 155 110, 130 65 Z" fill="#1db954"/>
+        <path d="M118 48 C 98 15, 30 15, 30 65 C 30 115, 98 115, 118 82 C 124 72, 124 58, 118 48 Z" fill="#ff0033"/>
+        <path d="M142 48 C 162 15, 230 15, 230 65 C 230 115, 162 115, 142 82 C 136 72, 136 58, 142 48 Z" fill="#1db954"/>
         <path d="M64 50 L 88 65 L 64 80 Z" fill="#fff"/>
         <path d="M196 50 L 172 65 L 196 80 Z" fill="#fff"/>
       </svg>
@@ -39,7 +39,7 @@
         <div class="infinito" role="group" aria-label="Cerca con la voce">
           <button id="btn-mic" class="anello yt" aria-label="Parla per cercare video su YouTube">
             <svg viewBox="20 15 110 100" aria-hidden="true">
-              <path class="forma" d="M130 65 C 105 20, 30 20, 30 65 C 30 110, 105 110, 130 65 Z"/>
+              <path class="forma" d="M118 48 C 98 15, 30 15, 30 65 C 30 115, 98 115, 118 82 C 124 72, 124 58, 118 48 Z"/>
               <g class="occhio"><!-- sbatte le palpebre -->
                 <circle cx="72" cy="65" r="22" fill="none" stroke="#fff" stroke-width="3"/>
                 <path d="M66 54 L 84 65 L 66 76 Z" fill="#fff"/>
@@ -48,7 +48,7 @@
           </button>
           <button id="btn-mic-sp" class="anello sp" aria-label="Parla per cercare podcast">
             <svg viewBox="130 15 110 100" aria-hidden="true">
-              <path class="forma" d="M130 65 C 155 20, 230 20, 230 65 C 230 110, 155 110, 130 65 Z"/>
+              <path class="forma" d="M142 48 C 162 15, 230 15, 230 65 C 230 115, 162 115, 142 82 C 136 72, 136 58, 142 48 Z"/>
               <!-- speculare al lato YouTube: cerchio e freccia rivolta a sinistra, come due occhi -->
               <g class="occhio">
                 <circle cx="188" cy="65" r="22" fill="none" stroke="#fff" stroke-width="3"/>
@@ -221,7 +221,7 @@
       <!-- Chiedi a Claude: si parla con Claude dentro l'app (cerchio che pulsa, risposta letta ad alta voce) -->
       <button id="btn-claude" type="button" class="tv-btn tv-claude">✳ Chiedi a Claude</button>
       <div id="claude-box" class="claude-box hidden" aria-live="polite">
-        <button id="claude-cerchio" type="button" class="claude-cerchio" aria-label="Parla con Claude"><svg class="spirale" viewBox="0 0 100 100" aria-hidden="true"><path d="M50.0 50.0 L50.2 50.0 L50.4 50.1 L50.5 50.2 L50.7 50.3 L50.8 50.5 L50.9 50.7 L51.0 50.9 L51.0 51.1 L51.0 51.4 L51.0 51.7 L50.9 51.9 L50.7 52.2 L50.5 52.4 L50.3 52.7 L50.0 52.9 L49.7 53.0 L49.3 53.2 L48.9 53.3 L48.5 53.3 L48.1 53.3 L47.6 53.3 L47.2 53.1 L46.7 52.9 L46.3 52.7 L45.9 52.4 L45.4 52.0 L45.1 51.6 L44.8 51.1 L44.5 50.6 L44.2 50.0 L44.1 49.4 L44.0 48.7 L44.0 48.0 L44.0 47.3 L44.2 46.6 L44.4 45.9 L44.7 45.3 L45.1 44.6 L45.6 44.0 L46.2 43.4 L46.8 42.8 L47.5 42.3 L48.3 41.9 L49.1 41.6 L50.0 41.4 L50.9 41.2 L51.9 41.2 L52.8 41.3 L53.8 41.4 L54.8 41.7 L55.7 42.1 L56.7 42.6 L57.5 43.2 L58.4 43.9 L59.1 44.7 L59.8 45.6 L60.4 46.6 L60.9 47.7 L61.2 48.8 L61.5 50.0 L61.6 51.2 L61.6 52.5 L61.5 53.7 L61.2 55.0 L60.8 56.2 L60.2 57.4 L59.5 58.6 L58.7 59.7 L57.8 60.7 L56.7 61.6 L55.5 62.4 L54.3 63.1 L52.9 63.7 L51.5 64.1 L50.0 64.4 L48.5 64.5 L46.9 64.4 L45.4 64.2 L43.8 63.8 L42.3 63.3 L40.9 62.6 L39.5 61.7 L38.2 60.6 L37.0 59.5 L35.9 58.1 L34.9 56.7 L34.1 55.2 L33.5 53.5 L33.0 51.8 L32.8 50.0 L32.7 48.2 L32.8 46.3 L33.0 44.5 L33.5 42.7 L34.2 40.9 L35.1 39.2 L36.2 37.6 L37.4 36.0 L38.8 34.6 L40.4 33.4 L42.1 32.3 L44.0 31.4 L45.9 30.7 L47.9 30.2 L50.0 29.9 L52.1 29.8 L54.3 29.9 L56.4 30.3 L58.5 30.9 L60.5 31.7 L62.5 32.8 L64.4 34.0 L66.1 35.5 L67.7 37.2 L69.1 39.0 L70.3 41.0 L71.3 43.1 L72.1 45.3 L72.7 47.6 L73.0 50.0 L73.1 52.4 L72.9 54.9 L72.4 57.3 L71.7 59.7 L70.7 62.0 L69.5 64.2 L68.1 66.3 L66.4 68.2 L64.5 70.0 L62.5 71.6 L60.2 72.9 L57.8 74.1 L55.3 74.9 L52.7 75.5 L50.0 75.9 L47.3 75.9 L44.5 75.7 L41.8 75.2 L39.2 74.3 L36.6 73.2 L34.1 71.9 L31.8 70.2 L29.6 68.3 L27.7 66.2 L25.9 63.9 L24.4 61.4 L23.2 58.7 L22.3 55.9 L21.6 53.0 L21.2 50.0 L21.2 47.0 L21.5 43.9 L22.1 40.9 L23.0 38.0 L24.3 35.1 L25.8 32.4 L27.6 29.9 L29.7 27.5 L32.1 25.3 L34.7 23.4 L37.4 21.8 L40.4 20.5 L43.5 19.4 L46.7 18.7 L50.0 18.4 L53.3 18.4 L56.7 18.7 L60.0 19.4 L63.2 20.4 L66.3 21.8 L69.3 23.5 L72.1 25.5 L74.6 27.8 L77.0 30.4 L79.0 33.2 L80.8 36.3 L82.3 39.5 L83.4 42.9 L84.1 46.4 L84.5 50.0 L84.5 53.6 L84.1 57.3 L83.4 60.8 L82.2 64.3 L80.7 67.7 L78.8 71.0 L76.6 74.0 L74.1 76.8 L71.3 79.3 L68.2 81.5 L64.9 83.4 L61.4 85.0 L57.7 86.2 L53.9 87.0 L50.0 87.4 L46.1 87.4 L42.1 86.9 L38.3 86.1 L34.5 84.8 L30.8 83.2 L27.4 81.2 L24.1 78.8 L21.1 76.0 L18.4 73.0 L16.0 69.6 L13.9 66.1 L12.3 62.3 L11.0 58.3 L10.2 54.2 L9.8 50.0 L9.8 45.8 L10.3 41.6 L11.2 37.4 L12.5 33.3 L14.3 29.4 L16.5 25.7 L19.1 22.2 L22.0 18.9 L25.3 16.0 L28.9 13.5 L32.8 11.3 L36.9 9.5 L41.1 8.2 L45.5 7.3 L50.0 6.9 L54.5 6.9 L59.0 7.4 L63.5 8.4 L67.9 9.9 L72.0 11.8 L76.0 14.2 L79.8 17.0 L83.2 20.1 L86.3 23.6 L89.0 27.5 L91.3 31.6 L93.2 36.0 L94.6 40.5 L95.6 45.2 L96.0 50.0" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/></svg></button>
+        <button id="claude-cerchio" type="button" class="claude-cerchio" aria-label="Parla con Claude: tocca gli occhi"><svg class="claude-occhi" viewBox="0 0 200 90" aria-hidden="true"><defs><radialGradient id="iride-verde"><stop offset="0.35" stop-color="#9fe0a8"/><stop offset="0.75" stop-color="#2f9e57"/><stop offset="1" stop-color="#145c30"/></radialGradient><radialGradient id="iride-marrone"><stop offset="0.35" stop-color="#d9a066"/><stop offset="0.75" stop-color="#8a5226"/><stop offset="1" stop-color="#4a2a10"/></radialGradient></defs><clipPath id="claude-clip1"><path d="M14 40 C 27 12, 77 12, 90 40 Q 94 45, 90 50 C 77 78, 27 78, 14 50 Q 10 45, 14 40 Z"/></clipPath><g class="c-occhio"><path class="c-bianco" d="M14 40 C 27 12, 77 12, 90 40 Q 94 45, 90 50 C 77 78, 27 78, 14 50 Q 10 45, 14 40 Z"/><g clip-path="url(#claude-clip1)"><g class="c-iride"><circle cx="52" cy="45" r="18" fill="url(#iride-verde)"/><circle class="c-pupilla" cx="52" cy="45" r="7.5"/><circle cx="58" cy="38" r="3.2" fill="#fff" opacity="0.9"/></g></g><path d="M14 40 C 27 12, 77 12, 90 40 Q 94 45, 90 50 C 77 78, 27 78, 14 50 Q 10 45, 14 40 Z" fill="none" stroke="#fff" stroke-width="2.5"/></g><clipPath id="claude-clip2"><path d="M110 40 C 123 12, 173 12, 186 40 Q 190 45, 186 50 C 173 78, 123 78, 110 50 Q 106 45, 110 40 Z"/></clipPath><g class="c-occhio"><path class="c-bianco" d="M110 40 C 123 12, 173 12, 186 40 Q 190 45, 186 50 C 173 78, 123 78, 110 50 Q 106 45, 110 40 Z"/><g clip-path="url(#claude-clip2)"><g class="c-iride"><circle cx="148" cy="45" r="18" fill="url(#iride-marrone)"/><circle class="c-pupilla" cx="148" cy="45" r="7.5"/><circle cx="154" cy="38" r="3.2" fill="#fff" opacity="0.9"/></g></g><path d="M110 40 C 123 12, 173 12, 186 40 Q 190 45, 186 50 C 173 78, 123 78, 110 50 Q 106 45, 110 40 Z" fill="none" stroke="#fff" stroke-width="2.5"/></g></svg></button>
         <p id="claude-stato" class="claude-stato"></p>
         <p id="claude-domanda" class="claude-domanda"></p>
         <p id="claude-risposta" class="claude-risposta"></p>

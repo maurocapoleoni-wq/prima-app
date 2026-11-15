@@ -206,21 +206,28 @@ body {
 /* Chiedi a Claude: cerchio che pulsa mentre ascolta e mentre parla */
 .claude-box { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 420px;
   margin-bottom: 12px; padding: 18px 14px 12px; border-radius: 18px; background: #1d1714; border: 1px solid rgba(217, 119, 87, 0.35); }
-.claude-cerchio { position: relative; width: 104px; height: 104px; padding: 6px; border-radius: 50%; cursor: pointer;
-  background: #000; border: 3px solid #fff; box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5); transition: transform 0.2s; }
+.claude-cerchio { width: 210px; max-width: 80%; padding: 4px; border: none; border-radius: 40px; background: none; cursor: pointer; }
 .claude-cerchio:disabled { opacity: 0.4; cursor: default; }
-/* Spirale in bianco e nero: ferma quando Claude aspetta, gira quando lavora */
-.claude-cerchio .spirale { display: block; width: 100%; height: 100%; }
-.claude-box.ascolta .spirale { animation: claude-gira 2.2s linear infinite; }
-.claude-box.pensa .spirale { animation: claude-gira 0.9s linear infinite; }
-.claude-box.parla .spirale { animation: claude-gira 1.6s linear infinite; }
-.claude-box.ascolta .claude-cerchio { animation: claude-onda 1.1s ease-out infinite; }
-.claude-box.parla .claude-cerchio { animation: claude-voce 0.7s ease-in-out infinite alternate, claude-onda 1.4s ease-out infinite; }
-@keyframes claude-onda { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.55); } 100% { box-shadow: 0 0 0 24px rgba(255, 255, 255, 0); } }
-@keyframes claude-voce { from { transform: scale(0.95); } to { transform: scale(1.06); } }
-@keyframes claude-gira { to { transform: rotate(360deg); } }
+/* Occhi di Claude: uno verde e uno marrone, sbattono le palpebre e seguono quello che succede */
+.claude-occhi { display: block; width: 100%; height: auto; overflow: visible; }
+.c-bianco { fill: #f4f1ec; }
+.c-pupilla { fill: #111; transform-box: fill-box; transform-origin: center; transition: transform 0.3s; }
+.c-occhio { transform-box: fill-box; transform-origin: center; animation: c-palpebre 5s infinite; }
+.c-iride { transition: transform 0.4s ease; }
+@keyframes c-palpebre { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.08); } }
+/* ascolta: occhi spalancati, pupille grandi */
+.claude-box.ascolta .c-occhio { animation: c-attento 1.2s ease-in-out infinite alternate; }
+.claude-box.ascolta .c-pupilla { transform: scale(1.35); }
+@keyframes c-attento { from { transform: scale(1); } to { transform: scale(1.06); } }
+/* pensa: lo sguardo va in alto e di lato */
+.claude-box.pensa .c-iride { animation: c-pensa 2.4s ease-in-out infinite; }
+@keyframes c-pensa { 0%, 100% { transform: translate(-9px, -8px); } 50% { transform: translate(9px, -8px); } }
+/* parla: gli occhi pulsano a ritmo */
+.claude-box.parla .c-occhio { animation: c-voce 0.6s ease-in-out infinite alternate; }
+@keyframes c-voce { from { transform: scaleY(0.9); } to { transform: scaleY(1.04); } }
+.claude-box.ascolta .claude-occhi, .claude-box.parla .claude-occhi { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.35)); }
 @media (prefers-reduced-motion: reduce) {
-  .claude-box .claude-cerchio, .claude-box .spirale { animation: none !important; }
+  .c-occhio, .c-iride { animation: none !important; }
 }
 .claude-stato { margin: 4px 0 0; color: #f0a283; font-size: 0.95rem; text-align: center; }
 .claude-domanda { margin: 0; color: var(--muted); font-size: 0.9rem; text-align: center; }

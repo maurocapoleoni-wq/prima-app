@@ -1,5 +1,5 @@
 // ---------- Chiedi a Claude: si parla con Claude dentro l'app ----------
-// Tocchi il cerchio, fai la domanda a voce, Claude risponde e il telefono legge la risposta.
+// Tocchi gli occhi, fai la domanda a voce, Claude risponde e il telefono legge la risposta.
 // Claude non vede il video: conosce titolo, canale, descrizione e il minuto a cui sei arrivato.
 // La chiave di Claude la inserisce ognuno in Impostazioni: resta solo su quel telefono,
 // non è mai scritta nel codice (che su GitHub è pubblico).
@@ -150,7 +150,7 @@ async function chiediClaude(domanda) {
 function mostraRispostaClaude(testo) {
   $('claude-risposta').textContent = testo;
   if (!('speechSynthesis' in window)) {
-    impostaStatoClaude('fermo', 'Tocca il cerchio per un\'altra domanda');
+    impostaStatoClaude('fermo', 'Tocca gli occhi per un\'altra domanda');
     return;
   }
   speechSynthesis.cancel();
@@ -159,9 +159,9 @@ function mostraRispostaClaude(testo) {
   const italiana = speechSynthesis.getVoices().find((x) => x.lang?.toLowerCase().startsWith('it'));
   if (italiana) voce.voice = italiana;
   voce.onend = voce.onerror = () => {
-    if (statoClaude === 'parla') impostaStatoClaude('fermo', 'Tocca il cerchio per un\'altra domanda');
+    if (statoClaude === 'parla') impostaStatoClaude('fermo', 'Tocca gli occhi per un\'altra domanda');
   };
-  impostaStatoClaude('parla', 'Claude sta parlando… (tocca il cerchio per interromperlo)');
+  impostaStatoClaude('parla', 'Claude sta parlando… (tocca gli occhi per interromperlo)');
   speechSynthesis.speak(voce);
 }
 
@@ -191,12 +191,12 @@ function ascoltaClaude() {
     ascoltoClaude = null;
     impostaStatoClaude('fermo', e.error === 'not-allowed'
       ? 'Il microfono è bloccato: permettilo all\'app oppure scrivi la domanda.'
-      : 'Non ho sentito nulla: tocca il cerchio e riprova.');
+      : 'Non ho sentito nulla: tocca gli occhi e riprova.');
   };
   rec.onend = () => {
     ascoltoClaude = null;
     if (detto.trim()) chiediClaude(detto);
-    else impostaStatoClaude('fermo', 'Non ho sentito nulla: tocca il cerchio e riprova.');
+    else impostaStatoClaude('fermo', 'Non ho sentito nulla: tocca gli occhi e riprova.');
   };
   $('claude-domanda').textContent = '';
   impostaStatoClaude('ascolta', 'Ti ascolto…');
@@ -220,7 +220,7 @@ function apriClaude() {
     $('claude-domanda').textContent = '';
     $('claude-risposta').textContent = '';
   }
-  impostaStatoClaude('fermo', 'Tocca il cerchio e fai la tua domanda');
+  impostaStatoClaude('fermo', 'Tocca gli occhi e fai la tua domanda');
 }
 
 function chiudiClaude() {
