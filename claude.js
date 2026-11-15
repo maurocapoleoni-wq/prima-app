@@ -72,7 +72,7 @@ function istruzioniClaude(v, contesto) {
 }
 
 // Una domanda a Claude (raw HTTP: l'app è JavaScript semplice nel browser, senza programmi di build)
-async function chiamaClaude() {
+async function chiamaClaude(sistema = chatClaude.sistema, messaggi = chatClaude.messaggi) {
   const modello = modelloClaude();
   const headers = {
     'content-type': 'application/json',
@@ -84,8 +84,8 @@ async function chiamaClaude() {
     model: modello,
     max_tokens: 2048, // risposte volutamente brevi: vengono lette ad alta voce
     output_config: { effort: 'low' }, // conversazione: risposte rapide
-    system: chatClaude.sistema,
-    messages: chatClaude.messaggi,
+    system: sistema,
+    messages: messaggi,
   };
   if (modello === 'claude-opus-5-5') {
     // solo Opus: se rifiuta, l'API riprova da sola con il modello di riserva consigliato (Haiku non lo prevede)
@@ -250,6 +250,66 @@ document.addEventListener('videoaperto', chiudiClaude);
 document.addEventListener('videochiuso', chiudiClaude);
 // alcune voci del telefono arrivano solo dopo un attimo
 if ('speechSynthesis' in window) speechSynthesis.getVoices();
+
+// ---------- Video simili ----------
+// YouTube non offre più la ricerca "video correlati": l'app crea una ricerca sullo stesso argomento.
+// Con la chiave di Claude è Claude a scegliere le parole giuste (da titolo e descrizione);
+// senza, usa le parole più importanti del titolo. Poi mostra i risultati nella scheda Cerca.
+
+const PAROLE_VUOTE = new Set(('il lo la i gli le un uno una di a da in con su per tra fra e o ma che chi come del della dei '
+  + 'delle degli al alla ai alle dal dalla nel nella sul sulla è non più video ufficiale official full hd 4k '
+  + 'fare ecco cosa perché quando dove questo questa mio mia tuo tua nostro '
+  + 'the a an of to and or in on for with is how what why my your you we episode episodio puntata parte part ep').split(' '));
+
+function ricercaDaTitolo(titolo) {
+  const parole = (titolo || '')
+    .replace(/#\S+/g, ' ')                     // hashtag
+    .replace(/[([{].*?[)\]}]/g, ' ')            // parentesi tipo (Official Video)
+    .split(/[^\p{L}\p{N}']+/u)
+    .filter((p) => p.length > 1 && !PAROLE_VUOTE.has(p.toLowerCase()));
+  return parole.slice(0, 6).join(' ') || titolo;
+}
+
+async function ricercaDaClaude(v) {
+  const podcast = v.fonte === 'podcast';
+  const sistema = `Crei ricerche per trovare ${podcast ? 'episodi di podcast' : 'video su YouTube'} simili a quello che l'utente sta guardando. `
+    + 'Rispondi SOLO con la ricerca: da 3 a 7 parole, senza virgolette, senza spiegazioni, nella stessa lingua del contenuto. '
+    + "Deve trovare altri contenuti sullo stesso argomento preciso, non lo stesso; non mettere il nome del canale, a meno che l'argomento sia il canale stesso.";
+  const risposta = await chiamaClaude(sistema, [{ role: 'user', content: await contestoVideo(v) }]);
+  if (risposta.stop_reason === 'refusal') return '';
+  const t = (risposta.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(' ');
+  return t.split(/\r?\n/)[0].replace(/["«»“”]/g, '').trim().slice(0, 80);
+}
+
+// sul lettore dei podcast il pulsante dice "Episodi simili"
+document.addEventListener('videoaperto', () => {
+  $('btn-simili').textContent = videoCorrente?.fonte === 'podcast' ? '🔍 Episodi simili' : '🔍 Video simili';
+});
+
+$('btn-simili').addEventListener('click', async () => {
+  const v = videoCorrente;
+  if (!v) return;
+  const btn = $('btn-simili');
+  const etichetta = btn.textContent;
+  comandoPlayer('pauseVideo');
+  $('audio-player').pause();
+  btn.disabled = true;
+  btn.textContent = '🔍 Cerco contenuti simili…';
+  let query = '';
+  if (leggiChiaveClaude()) {
+    try { query = await ricercaDaClaude(v); } catch { /* senza Claude: si usa il titolo */ }
+  }
+  if (!query) query = ricercaDaTitolo(v.title);
+  btn.disabled = false;
+  btn.textContent = etichetta;
+  if (videoCorrente !== v) return; // nel frattempo l'utente ha chiuso il video
+  // torna alla scheda Cerca (come il tasto indietro) e cerca, senza riproporre il video di partenza
+  document.addEventListener('videochiuso', () => {
+    mostraTab('cerca');
+    cerca(query, v.fonte === 'podcast' ? 'podcast' : 'youtube', v.id);
+  }, { once: true });
+  history.back();
+});
 
 // ---------- Impostazioni: chiave di Claude ----------
 function aggiornaInfoChiaveClaude() {

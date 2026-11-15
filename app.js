@@ -211,10 +211,11 @@ $('btn-recenti-cancella').addEventListener('click', () => {
   mostraRecenti();
 });
 
-async function cerca(query, fonte = 'youtube') {
+async function cerca(query, fonte = 'youtube', escludi = null) {
   if (fonte === 'youtube' && !getKey()) { show('settings'); return; }
   aggiungiRecente(query, fonte);
-  Object.assign(ricerca, { query, fonte, pagine: [], token: [undefined], idx: 0, tuttiPodcast: null });
+  // escludi: id del video da non riproporre (la ricerca "Video simili" parte da quello)
+  Object.assign(ricerca, { query, fonte, escludi, pagine: [], token: [undefined], idx: 0, tuttiPodcast: null });
   $('results').innerHTML = '';
   $('pager-cerca').classList.add('hidden');
   setStatus(`Cerco «${query}» su ${nomeFonte(fonte)}…`);
@@ -246,7 +247,7 @@ async function caricaPaginaRicerca(i) {
       title: testo(it.snippet.title),
       channel: testo(it.snippet.channelTitle),
       thumb: it.snippet.thumbnails?.medium?.url || it.snippet.thumbnails?.default?.url,
-    }));
+    })).filter((v) => v.id !== ricerca.escludi);
     ricerca.token[i + 1] = data.nextPageToken;
     return true;
   } catch (err) {
