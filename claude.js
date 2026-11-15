@@ -5,7 +5,14 @@
 // non è mai scritta nel codice (che su GitHub è pubblico).
 
 const CHIAVE_CLAUDE = 'chiave_claude';
-const MODELLO_CLAUDE = 'claude-opus-5-5';
+// Modello scelto in Impostazioni: Haiku (economico, predefinito) oppure Opus (più bravo, costa di più)
+const SCELTA_MODELLO = 'modello_claude';
+const MODELLI_CLAUDE = ['claude-haiku-5-5', 'claude-opus-5-5'];
+const modelloClaude = () => {
+  let m = '';
+  try { m = localStorage.getItem(SCELTA_MODELLO) || ''; } catch {}
+  return MODELLI_CLAUDE.includes(m) ? m : MODELLI_CLAUDE[0];
+};
 
 const leggiChiaveClaude = () => { try { return localStorage.getItem(CHIAVE_CLAUDE) || ''; } catch { return ''; } };
 
@@ -66,23 +73,27 @@ function istruzioniClaude(v, contesto) {
 
 // Una domanda a Claude (raw HTTP: l'app è JavaScript semplice nel browser, senza programmi di build)
 async function chiamaClaude() {
+  const modello = modelloClaude();
+  const headers = {
+    'content-type': 'application/json',
+    'x-api-key': leggiChiaveClaude(),
+    'anthropic-version': '2026-10-21',
+    'anthropic-dangerous-direct-browser-access': 'true', // la chiamata parte dal telefono, con la chiave di chi usa l'app
+  };
+  const corpo = {
+    model: modello,
+    max_tokens: 2048, // risposte volutamente brevi: vengono lette ad alta voce
+    output_config: { effort: 'low' }, // conversazione: risposte rapide
+    system: chatClaude.sistema,
+    messages: chatClaude.messaggi,
+  };
+  if (modello === 'claude-opus-5-5') {
+    // solo Opus: se rifiuta, l'API riprova da sola con il modello di riserva consigliato (Haiku non lo prevede)
+    headers['anthropic-beta'] = 'server-side-fallback-2026-07-01';
+    corpo.fallbacks = 'default';
+  }
   const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': leggiChiaveClaude(),
-      'anthropic-version': '2026-10-21',
-      'anthropic-beta': 'server-side-fallback-2026-07-01',
-      'anthropic-dangerous-direct-browser-access': 'true', // la chiamata parte dal telefono, con la chiave di chi usa l'app
-    },
-    body: JSON.stringify({
-      model: MODELLO_CLAUDE,
-      max_tokens: 2048, // risposte volutamente brevi: vengono lette ad alta voce
-      output_config: { effort: 'low' }, // conversazione: risposte rapide
-      fallbacks: 'default', // se il modello rifiuta, l'API riprova da sola con il modello di riserva consigliato
-      system: chatClaude.sistema,
-      messages: chatClaude.messaggi,
-    }),
+    method: 'POST', headers, body: JSON.stringify(corpo),
   });
   let dati = {};
   try { dati = await r.json(); } catch {}
@@ -108,8 +119,9 @@ async function chiediClaude(domanda) {
   $('claude-risposta').textContent = '';
   impostaStatoClaude('pensa', 'Claude sta pensando…');
   try {
-    if (chatClaude.idVideo !== v.id) {
-      chatClaude = { idVideo: v.id, sistema: istruzioniClaude(v, await contestoVideo(v)), messaggi: [] };
+    if (chatClaude.idVideo !== v.id || chatClaude.modello !== modelloClaude()) {
+      // video nuovo o modello cambiato in Impostazioni: la conversazione ricomincia
+      chatClaude = { idVideo: v.id, modello: modelloClaude(), sistema: istruzioniClaude(v, await contestoVideo(v)), messaggi: [] };
     }
     const minuto = tempoAttuale() > 5 ? `(Sono al minuto ${formatTempo(tempoAttuale())}.) ` : '';
     chatClaude.messaggi.push({ role: 'user', content: minuto + domanda });
@@ -244,7 +256,13 @@ function aggiornaInfoChiaveClaude() {
   $('claude-key').value = '';
   $('claude-key').placeholder = leggiChiaveClaude() ? '•••••••• (chiave salvata)' : 'sk-ant-...';
 }
-$('btn-settings').addEventListener('click', aggiornaInfoChiaveClaude);
+$('btn-settings').addEventListener('click', () => {
+  aggiornaInfoChiaveClaude();
+  $('claude-modello').value = modelloClaude();
+});
+$('claude-modello').addEventListener('change', (e) => {
+  try { localStorage.setItem(SCELTA_MODELLO, e.target.value); } catch {}
+});
 $('btn-save-claude').addEventListener('click', () => {
   const k = $('claude-key').value.trim();
   if (!k && !leggiChiaveClaude()) return;

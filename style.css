@@ -108,7 +108,7 @@ body {
   color: var(--text);
   font-size: 1rem;
 }
-.text-form button, #btn-save-key {
+.text-form button, #btn-save-key, #btn-save-claude {
   padding: 10px 16px;
   border-radius: 20px;
   border: none;
@@ -396,7 +396,7 @@ body {
 }
 
 .settings-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.settings-body input {
+.settings-body input, .settings-body select {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #333;
